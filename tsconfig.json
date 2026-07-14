@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "rootDir": "source",
     "outDir": "dist",
     "module": "nodenext",
     "moduleResolution": "nodenext",
@@ -9,6 +7,7 @@
     "target": "esnext",
     "lib": ["ESNext"],
     "jsx": "react-jsx",
+    "types": ["node"],
     "newLine": "lf",
     "stripInternal": true,
     "rewriteRelativeImportExtensions": true,
@@ -28,6 +27,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["source"],
+  "include": ["source", "build.ts"],
   "exclude": ["node_modules"]
 }
