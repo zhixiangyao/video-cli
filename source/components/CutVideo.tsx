@@ -1,0 +1,178 @@
+import { useState, useEffect } from 'react'
+import { Text, Newline } from 'ink'
+import TextInput from './TextInput.tsx'
+import { globMp4FilesFlat, fileExists, safeFileName, parse } from '../lib/files.ts'
+import { runFfmpeg } from '../lib/ffmpeg.ts'
+
+type Props = {
+  onBack: () => void
+}
+
+type Step =
+  | { type: 'loading' }
+  | { type: 'select-file'; files: string[] }
+  | { type: 'input-start-time'; file: string }
+  | { type: 'confirm-overwrite'; file: string; outputFile: string; startTime: string }
+  | { type: 'running'; outputFile: string; output: string }
+  | { type: 'done'; message: string }
+  | { type: 'error'; message: string }
+
+export default function CutVideo({ onBack }: Props) {
+  const [step, setStep] = useState<Step>({ type: 'loading' })
+
+  useEffect(() => {
+    globMp4FilesFlat().then((files) => {
+      setStep({ type: 'select-file', files })
+    })
+  }, [])
+
+  const handleFileChoice = (choice: string) => {
+    const current = step as { type: 'select-file'; files: string[] }
+    const idx = parseInt(choice, 10) - 1
+
+    if (idx >= 0 && idx < current.files.length) {
+      const file = current.files[idx]!
+      setStep({ type: 'input-start-time', file })
+    } else if (idx === current.files.length) {
+      setStep({ type: 'input-start-time', file: '' })
+    } else {
+      setStep({ type: 'error', message: '无效的选择.' })
+    }
+  }
+
+  const handleManualFile = (file: string) => {
+    if (file.trim().toLowerCase() === 'q') {
+      onBack()
+      return
+    }
+    const trimmed = safeFileName(file.trim())
+    if (!fileExists(trimmed)) {
+      setStep({ type: 'error', message: `错误: 文件 '${trimmed}' 不存在.` })
+      return
+    }
+    setStep({ type: 'input-start-time', file: trimmed })
+  }
+
+  const handleStartTime = (startTime: string) => {
+    const current = step as { type: 'input-start-time'; file: string }
+    if (!startTime.trim()) {
+      setStep({ type: 'error', message: '错误: 起始时间不能为空.' })
+      return
+    }
+    const { name: baseName, ext } = parse(current.file)
+    const outputFile = `${baseName}-cutted${ext}`
+
+    if (fileExists(outputFile)) {
+      setStep({ type: 'confirm-overwrite', file: current.file, outputFile, startTime: startTime.trim() })
+    } else {
+      runCut(current.file, outputFile, startTime.trim())
+    }
+  }
+
+  const handleOverwrite = (answer: string) => {
+    const current = step as { type: 'confirm-overwrite'; file: string; outputFile: string; startTime: string }
+    if (/^[Yy]$/.test(answer.trim())) {
+      runCut(current.file, current.outputFile, current.startTime)
+    } else {
+      setStep({ type: 'done', message: '🛒 操作已取消.' })
+    }
+  }
+
+  const runCut = async (inputFile: string, outputFile: string, startTime: string) => {
+    setStep({ type: 'running', outputFile, output: '' })
+
+    try {
+      await runFfmpeg(['-y', '-ss', startTime, '-i', inputFile, '-c', 'copy', outputFile], (line) => {
+        setStep((prev) => {
+          if (prev.type === 'running') {
+            return { ...prev, output: prev.output + line }
+          }
+          return prev
+        })
+      })
+      setStep({ type: 'done', message: `🎉 视频裁剪完成! -> ${outputFile}` })
+    } catch {
+      setStep({ type: 'error', message: '❌ 操作失败. 请查看上方错误日志.' })
+    }
+  }
+
+  if (step.type === 'loading') {
+    return <Text>正在扫描当前目录的 .mp4 文件...</Text>
+  }
+
+  if (step.type === 'select-file') {
+    if (step.files.length === 0) {
+      return (
+        <>
+          <Text color="red">❌ 当前目录没有 .mp4 文件.</Text>
+          <TextInput prompt="请手动输入视频文件名(输入 q 返回上级): " onSubmit={handleManualFile} />
+        </>
+      )
+    }
+    return (
+      <>
+        <Text color="cyan">🎵 当前目录找到以下 .mp4 文件:</Text>
+        {step.files.map((file, i) => (
+          <Text key={file}>
+            {i + 1}) {file}
+          </Text>
+        ))}
+        <Text>{step.files.length + 1}) 手动输入文件名</Text>
+        <TextInput prompt="请输入序号: " onSubmit={handleFileChoice} />
+      </>
+    )
+  }
+
+  if (step.type === 'input-start-time') {
+    if (!step.file) {
+      return <TextInput prompt="请输入文件名: " onSubmit={handleManualFile} />
+    }
+    return (
+      <>
+        <Text color="yellow">⏱️ 请输入裁剪起始时间 (例如 41, 00:00:41):</Text>
+        <TextInput prompt={`✂️  裁剪起始时间 [${step.file}]: `} onSubmit={handleStartTime} />
+      </>
+    )
+  }
+
+  if (step.type === 'confirm-overwrite') {
+    return (
+      <>
+        <Text color="yellow">⚠️ 输出文件 '{step.outputFile}' 已存在.</Text>
+        <TextInput prompt="是否覆盖? (y/N): " onSubmit={handleOverwrite} />
+      </>
+    )
+  }
+
+  if (step.type === 'running') {
+    return (
+      <>
+        <Text color="green">🚀 开始无损裁剪... 输出文件: {step.outputFile}</Text>
+        <Newline />
+        <Text>{step.output}</Text>
+      </>
+    )
+  }
+
+  if (step.type === 'done') {
+    return (
+      <>
+        <Text color="green">{step.message}</Text>
+        <Newline />
+        <TextInput prompt="按 Enter 返回菜单..." onSubmit={onBack} />
+      </>
+    )
+  }
+
+  if (step.type === 'error') {
+    return (
+      <>
+        <Text color="red">{step.message}</Text>
+        <Newline />
+        <TextInput prompt="按 Enter 返回菜单..." onSubmit={onBack} />
+      </>
+    )
+  }
+
+  return null
+}
