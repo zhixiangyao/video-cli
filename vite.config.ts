@@ -19,6 +19,15 @@ export default defineConfig({
         entryFileNames: outFileName,
         postBanner: ['#!/usr/bin/env node'].join('\n'),
         codeSplitting: false,
+        comments: false,
+        minify: {
+          compress: false,
+          mangle: false,
+          codegen: false,
+        },
+      },
+      experimental: {
+        attachDebugInfo: 'none',
       },
     },
   },
