@@ -1,7 +1,22 @@
 {
   "name": "video-cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "终端视频工具箱, 基于 Ink 构建的交互式 CLI 工具",
+  "keywords": [
+    "cli",
+    "ffmpeg",
+    "h265",
+    "hevc",
+    "ink",
+    "vaapi",
+    "video"
+  ],
   "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zhixiangyao/video-cli"
+  },
   "bin": "dist/cli.mjs",
   "files": [
     "dist"
