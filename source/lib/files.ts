@@ -1,5 +1,6 @@
 import { statSync, existsSync } from 'node:fs'
 import { glob } from 'node:fs/promises'
+import { stat } from 'node:fs/promises'
 import { join, parse, dirname, basename } from 'node:path'
 
 export async function globMp4Files(baseDir = '.'): Promise<string[]> {
@@ -20,10 +21,14 @@ export async function globMp4FilesFlat(baseDir = '.'): Promise<string[]> {
 
 export async function getDirectories(baseDir = '.'): Promise<string[]> {
   const results: string[] = []
-  for await (const entry of glob('**', { cwd: baseDir, withFileTypes: true })) {
-    if (entry.isDirectory()) {
-      const path = join(baseDir, entry.name)
-      if (path !== baseDir) results.push(path)
+  for await (const entry of glob('**', { cwd: baseDir })) {
+    const full = join(baseDir, entry)
+    try {
+      if ((await stat(full)).isDirectory()) {
+        if (full !== baseDir) results.push(full)
+      }
+    } catch {
+      // ignore stat errors
     }
   }
   return results
