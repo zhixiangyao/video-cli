@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Text, Newline } from 'ink'
 import TextInput from './TextInput.tsx'
 import BackToMenu from './BackToMenu.tsx'
-import { globMp4FilesFlat, fileExists, safeFileName, parse } from '../lib/files.ts'
+import { globMp4FilesFlat, fileExists, parse } from '../lib/files.ts'
 import { runFfmpeg } from '../lib/ffmpeg.ts'
 
 type Props = {
@@ -34,24 +34,9 @@ export default function CutVideo({ onBack }: Props) {
     if (idx >= 0 && idx < current.files.length) {
       const file = current.files[idx]!
       setStep({ type: 'input-start-time', file })
-    } else if (idx === current.files.length) {
-      setStep({ type: 'input-start-time', file: '' })
     } else {
       setStep({ type: 'error', message: '无效的选择.' })
     }
-  }
-
-  const handleManualFile = (file: string) => {
-    if (file.trim().toLowerCase() === 'q') {
-      onBack()
-      return
-    }
-    const trimmed = safeFileName(file.trim())
-    if (!fileExists(trimmed)) {
-      setStep({ type: 'error', message: `错误: 文件 '${trimmed}' 不存在.` })
-      return
-    }
-    setStep({ type: 'input-start-time', file: trimmed })
   }
 
   const handleStartTime = (startTime: string) => {
@@ -105,12 +90,7 @@ export default function CutVideo({ onBack }: Props) {
 
   if (step.type === 'select-file') {
     if (step.files.length === 0) {
-      return (
-        <>
-          <Text color="red">❌ 当前目录没有 .mp4 文件.</Text>
-          <TextInput prompt="请手动输入视频文件名(输入 q 返回上级): " onSubmit={handleManualFile} />
-        </>
-      )
+      return <BackToMenu message="❌ 当前目录没有 .mp4 文件." color="red" onBack={onBack} />
     }
     return (
       <>
@@ -120,7 +100,6 @@ export default function CutVideo({ onBack }: Props) {
             {i + 1}) {file}
           </Text>
         ))}
-        <Text>{step.files.length + 1}) 手动输入文件名</Text>
         <TextInput prompt="请输入序号: " onSubmit={handleFileChoice} />
       </>
     )
@@ -128,7 +107,7 @@ export default function CutVideo({ onBack }: Props) {
 
   if (step.type === 'input-start-time') {
     if (!step.file) {
-      return <TextInput prompt="请输入文件名: " onSubmit={handleManualFile} />
+      return <BackToMenu message="" onBack={onBack} />
     }
     return (
       <>

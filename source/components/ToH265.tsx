@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Text, Newline } from 'ink'
 import TextInput from './TextInput.tsx'
 import BackToMenu from './BackToMenu.tsx'
-import { globMp4FilesFlat, fileExists, safeFileName, parse } from '../lib/files.ts'
+import { globMp4FilesFlat, fileExists, parse } from '../lib/files.ts'
 import { getCodec, runFfmpeg } from '../lib/ffmpeg.ts'
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 
 type Step =
   | { type: 'loading' }
-  | { type: 'select-file'; files: string[]; manual?: boolean }
+  | { type: 'select-file'; files: string[] }
   | { type: 'checking-codec'; file: string }
   | { type: 'already-h265'; file: string; codec: string }
   | { type: 'choose-mode'; file: string; codec: string }
@@ -56,24 +56,9 @@ export default function ToH265({ onBack }: Props) {
     if (idx >= 0 && idx < current.files.length) {
       const file = current.files[idx]!
       setStep({ type: 'checking-codec', file })
-    } else if (idx === current.files.length) {
-      setStep({ type: 'select-file', files: current.files, manual: true })
     } else {
       setStep({ type: 'error', message: '无效的选择.' })
     }
-  }
-
-  const handleManualFile = (file: string) => {
-    if (file.trim().toLowerCase() === 'q') {
-      onBack()
-      return
-    }
-    const trimmed = safeFileName(file.trim())
-    if (!fileExists(trimmed)) {
-      setStep({ type: 'error', message: `错误: 文件 '${trimmed}' 不存在.` })
-      return
-    }
-    setStep({ type: 'checking-codec', file: trimmed })
   }
 
   const handleModeChoice = async (choice: string) => {
@@ -167,16 +152,8 @@ export default function ToH265({ onBack }: Props) {
   }
 
   if (step.type === 'select-file') {
-    if (step.manual) {
-      return <TextInput prompt="请手动输入视频文件名(输入 q 返回上级): " onSubmit={handleManualFile} />
-    }
     if (step.files.length === 0) {
-      return (
-        <>
-          <Text color="red">❌ 当前目录没有 .mp4 文件.</Text>
-          <TextInput prompt="请手动输入视频文件名(输入 q 返回上级): " onSubmit={handleManualFile} />
-        </>
-      )
+      return <BackToMenu message="❌ 当前目录没有 .mp4 文件." color="red" onBack={onBack} />
     }
     return (
       <>
@@ -186,7 +163,6 @@ export default function ToH265({ onBack }: Props) {
             {i + 1}) {file}
           </Text>
         ))}
-        <Text>{step.files.length + 1}) 手动输入文件名</Text>
         <TextInput prompt="请输入序号: " onSubmit={handleFileChoice} />
       </>
     )
@@ -201,8 +177,7 @@ export default function ToH265({ onBack }: Props) {
       <>
         <Text>ℹ️ 当前视频编码: {step.codec}</Text>
         <Text color="yellow">⚠️ 此视频已是 H265/HEVC 编码，无需转码.</Text>
-        <Newline />
-        <TextInput prompt="按 Enter 返回菜单..." onSubmit={onBack} />
+        <BackToMenu message="" onBack={onBack} />
       </>
     )
   }
