@@ -18,7 +18,7 @@ export default function Menu({ onSelect }: Props) {
   return (
     <>
       <Text bold color="magenta">
-        🛠️ 欢迎使用视频工具箱
+        欢迎使用视频工具箱
       </Text>
       <Text>---------------------------------</Text>
       {MENU_ITEMS.map((item) => (
