@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Text, Box, useInput } from 'ink'
+import { Text, useInput } from 'ink'
 import Menu from './components/Menu.tsx'
 import CutVideo from './components/CutVideo.tsx'
 import ToH265 from './components/ToH265.tsx'
@@ -23,20 +23,9 @@ const screenComponentMap = new Map(SCREEN_MAP.map((s) => [s.screen, s.Component]
 export default function App() {
   const [screen, setScreen] = useState<Screen>('menu')
   const [missingDeps, setMissingDeps] = useState<MissingDeps | null>(null)
-  const [termHeight, setTermHeight] = useState(() => process.stdout.rows || 24)
-  const [termWidth, setTermWidth] = useState(() => process.stdout.columns || 80)
 
   useEffect(() => {
     checkDependencies().then(setMissingDeps)
-
-    const onResize = () => {
-      setTermHeight(process.stdout.rows)
-      setTermWidth(process.stdout.columns)
-    }
-    process.stdout.on('resize', onResize)
-    return () => {
-      process.stdout.off('resize', onResize)
-    }
   }, [])
 
   useInput((input) => {
