@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Text, Newline } from 'ink'
 import TextInput from './TextInput.tsx'
+import BackToMenu from './BackToMenu.tsx'
 import { globMp4FilesFlat, fileExists, safeFileName, parse } from '../lib/files.ts'
-import { getCodec, runFfmpeg, runVaapiFfmpeg } from '../lib/ffmpeg.ts'
+import { getCodec, runFfmpeg } from '../lib/ffmpeg.ts'
 
 type Props = {
   onBack: () => void
@@ -10,7 +11,7 @@ type Props = {
 
 type Step =
   | { type: 'loading' }
-  | { type: 'select-file'; files: string[] }
+  | { type: 'select-file'; files: string[]; manual?: boolean }
   | { type: 'checking-codec'; file: string }
   | { type: 'already-h265'; file: string; codec: string }
   | { type: 'choose-mode'; file: string; codec: string }
@@ -56,8 +57,7 @@ export default function ToH265({ onBack }: Props) {
       const file = current.files[idx]!
       setStep({ type: 'checking-codec', file })
     } else if (idx === current.files.length) {
-      // Will be set to manual input via the TextInput
-      setStep((prev) => ({ ...prev, type: 'select-file' }) as Step)
+      setStep({ type: 'select-file', files: current.files, manual: true })
     } else {
       setStep({ type: 'error', message: '无效的选择.' })
     }
@@ -131,10 +131,10 @@ export default function ToH265({ onBack }: Props) {
             'copy',
             outputFile,
           ],
-          onOutput,
+          { onOutput },
         )
       } else {
-        await runVaapiFfmpeg(
+        await runFfmpeg(
           [
             '-y',
             '-vaapi_device',
@@ -153,7 +153,7 @@ export default function ToH265({ onBack }: Props) {
             'copy',
             outputFile,
           ],
-          onOutput,
+          { onOutput, env: { LIBVA_DRIVER_NAME: 'iHD' } },
         )
       }
       setStep({ type: 'done', message: `🎉 转码完成! -> ${outputFile}` })
@@ -167,6 +167,9 @@ export default function ToH265({ onBack }: Props) {
   }
 
   if (step.type === 'select-file') {
+    if (step.manual) {
+      return <TextInput prompt="请手动输入视频文件名(输入 q 返回上级): " onSubmit={handleManualFile} />
+    }
     if (step.files.length === 0) {
       return (
         <>
@@ -238,23 +241,11 @@ export default function ToH265({ onBack }: Props) {
   }
 
   if (step.type === 'done') {
-    return (
-      <>
-        <Text color="green">{step.message}</Text>
-        <Newline />
-        <TextInput prompt="按 Enter 返回菜单..." onSubmit={onBack} />
-      </>
-    )
+    return <BackToMenu message={step.message} color="green" onBack={onBack} />
   }
 
   if (step.type === 'error') {
-    return (
-      <>
-        <Text color="red">{step.message}</Text>
-        <Newline />
-        <TextInput prompt="按 Enter 返回菜单..." onSubmit={onBack} />
-      </>
-    )
+    return <BackToMenu message={step.message} color="red" onBack={onBack} />
   }
 
   return null

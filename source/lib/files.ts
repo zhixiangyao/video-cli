@@ -1,18 +1,32 @@
-import { globSync, statSync, existsSync } from 'node:fs'
+import { statSync, existsSync } from 'node:fs'
+import { glob } from 'node:fs/promises'
 import { join, parse, dirname, basename } from 'node:path'
 
 export async function globMp4Files(baseDir = '.'): Promise<string[]> {
-  return globSync('**/*.{mp4,MP4,Mp4}', { cwd: baseDir }).map((entry) => join(baseDir, entry))
+  const results: string[] = []
+  for await (const entry of glob('**/*.{mp4,MP4,Mp4}', { cwd: baseDir })) {
+    results.push(join(baseDir, entry))
+  }
+  return results
 }
 
 export async function globMp4FilesFlat(baseDir = '.'): Promise<string[]> {
-  return globSync('*.{mp4,MP4,Mp4}', { cwd: baseDir })
+  const results: string[] = []
+  for await (const entry of glob('*.{mp4,MP4,Mp4}', { cwd: baseDir })) {
+    results.push(entry)
+  }
+  return results
 }
 
 export async function getDirectories(baseDir = '.'): Promise<string[]> {
-  return globSync('**/', { cwd: baseDir })
-    .filter((entry) => entry !== baseDir)
-    .map((entry) => join(baseDir, entry))
+  const results: string[] = []
+  for await (const entry of glob('**', { cwd: baseDir, withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      const path = join(baseDir, entry.name)
+      if (path !== baseDir) results.push(path)
+    }
+  }
+  return results
 }
 
 export function fileExists(filepath: string): boolean {

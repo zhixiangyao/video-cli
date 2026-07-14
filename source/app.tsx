@@ -10,6 +10,16 @@ import { checkDependencies, type MissingDeps } from './lib/ffmpeg.ts'
 
 type Screen = 'menu' | 'cut-video' | 'to-h265' | 'add-codec-suffix' | 'remove-codec-suffix' | 'sync-folder-name'
 
+const SCREEN_MAP = [
+  { key: '1', screen: 'cut-video' as const, Component: CutVideo },
+  { key: '2', screen: 'to-h265' as const, Component: ToH265 },
+  { key: '3', screen: 'add-codec-suffix' as const, Component: AddCodecSuffix },
+  { key: '4', screen: 'remove-codec-suffix' as const, Component: RemoveCodecSuffix },
+  { key: '5', screen: 'sync-folder-name' as const, Component: SyncFolderName },
+] as const
+
+const screenComponentMap = new Map(SCREEN_MAP.map((s) => [s.screen, s.Component]))
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>('menu')
   const [missingDeps, setMissingDeps] = useState<MissingDeps | null>(null)
@@ -34,26 +44,13 @@ export default function App() {
   }, [])
 
   const handleMenuSelect = (choice: string) => {
-    switch (choice.trim()) {
-      case '1':
-        setScreen('cut-video')
-        break
-      case '2':
-        setScreen('to-h265')
-        break
-      case '3':
-        setScreen('add-codec-suffix')
-        break
-      case '4':
-        setScreen('remove-codec-suffix')
-        break
-      case '5':
-        setScreen('sync-folder-name')
-        break
-      case '6':
-        process.exit(0)
-      default:
-        break
+    const trimmed = choice.trim()
+    if (trimmed === '6') {
+      process.exit(0)
+    }
+    const config = SCREEN_MAP.find((s) => s.key === trimmed)
+    if (config) {
+      setScreen(config.screen)
     }
   }
 
@@ -72,20 +69,10 @@ export default function App() {
     ) : null
 
   const renderScreen = () => {
-    switch (screen) {
-      case 'menu':
-        return <Menu onSelect={handleMenuSelect} />
-      case 'cut-video':
-        return <CutVideo onBack={goBack} />
-      case 'to-h265':
-        return <ToH265 onBack={goBack} />
-      case 'add-codec-suffix':
-        return <AddCodecSuffix onBack={goBack} />
-      case 'remove-codec-suffix':
-        return <RemoveCodecSuffix onBack={goBack} />
-      case 'sync-folder-name':
-        return <SyncFolderName onBack={goBack} />
-    }
+    if (screen === 'menu') return <Menu onSelect={handleMenuSelect} />
+    const Component = screenComponentMap.get(screen)
+    if (Component) return <Component onBack={goBack} />
+    return null
   }
 
   return (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Text, Newline } from 'ink'
 import TextInput from './TextInput.tsx'
+import BackToMenu from './BackToMenu.tsx'
 import { globMp4FilesFlat, fileExists, safeFileName, parse } from '../lib/files.ts'
 import { runFfmpeg } from '../lib/ffmpeg.ts'
 
@@ -82,13 +83,15 @@ export default function CutVideo({ onBack }: Props) {
     setStep({ type: 'running', outputFile, output: '' })
 
     try {
-      await runFfmpeg(['-y', '-ss', startTime, '-i', inputFile, '-c', 'copy', outputFile], (line) => {
-        setStep((prev) => {
-          if (prev.type === 'running') {
-            return { ...prev, output: prev.output + line }
-          }
-          return prev
-        })
+      await runFfmpeg(['-y', '-ss', startTime, '-i', inputFile, '-c', 'copy', outputFile], {
+        onOutput: (line) => {
+          setStep((prev) => {
+            if (prev.type === 'running') {
+              return { ...prev, output: prev.output + line }
+            }
+            return prev
+          })
+        },
       })
       setStep({ type: 'done', message: `🎉 视频裁剪完成! -> ${outputFile}` })
     } catch {
@@ -155,23 +158,11 @@ export default function CutVideo({ onBack }: Props) {
   }
 
   if (step.type === 'done') {
-    return (
-      <>
-        <Text color="green">{step.message}</Text>
-        <Newline />
-        <TextInput prompt="按 Enter 返回菜单..." onSubmit={onBack} />
-      </>
-    )
+    return <BackToMenu message={step.message} color="green" onBack={onBack} />
   }
 
   if (step.type === 'error') {
-    return (
-      <>
-        <Text color="red">{step.message}</Text>
-        <Newline />
-        <TextInput prompt="按 Enter 返回菜单..." onSubmit={onBack} />
-      </>
-    )
+    return <BackToMenu message={step.message} color="red" onBack={onBack} />
   }
 
   return null

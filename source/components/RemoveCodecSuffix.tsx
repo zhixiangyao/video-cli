@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Text, Newline } from 'ink'
+import { Text } from 'ink'
 import TextInput from './TextInput.tsx'
+import BackToMenu from './BackToMenu.tsx'
 import { globMp4Files, getDirectories, fileExists, dirExists, join, parse, dirname, basename } from '../lib/files.ts'
 import { rename } from 'node:fs/promises'
 
@@ -136,23 +137,11 @@ export default function RemoveCodecSuffix({ onBack }: Props) {
   }
 
   if (step.type === 'error') {
-    return (
-      <>
-        <Text color="red">{step.message}</Text>
-        <Newline />
-        <TextInput prompt="按 Enter 返回菜单..." onSubmit={onBack} />
-      </>
-    )
+    return <BackToMenu message={step.message} color="red" onBack={onBack} />
   }
 
   if (step.type === 'done') {
-    return (
-      <>
-        <Text color="green">{step.message}</Text>
-        <Newline />
-        <TextInput prompt="按 Enter 返回菜单..." onSubmit={onBack} />
-      </>
-    )
+    return <BackToMenu message={step.message} color="green" onBack={onBack} />
   }
 
   return null

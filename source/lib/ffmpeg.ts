@@ -38,38 +38,21 @@ export async function getCodec(filepath: string): Promise<string | null> {
   }
 }
 
-export function runFfmpeg(args: string[], onOutput?: (line: string) => void): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = execFile('ffmpeg', args, { maxBuffer: 10 * 1024 * 1024 })
-
-    if (onOutput && child.stderr) {
-      child.stderr.on('data', (data: Buffer) => {
-        onOutput(data.toString())
-      })
-    }
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve()
-      } else {
-        reject(new Error(`ffmpeg exited with code ${code}`))
-      }
-    })
-
-    child.on('error', reject)
-  })
+export type FfmpegOptions = {
+  onOutput?: (line: string) => void
+  env?: Record<string, string>
 }
 
-export function runVaapiFfmpeg(args: string[], onOutput?: (line: string) => void): Promise<void> {
+export function runFfmpeg(args: string[], options?: FfmpegOptions): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = execFile('ffmpeg', args, {
       maxBuffer: 10 * 1024 * 1024,
-      env: { ...process.env, LIBVA_DRIVER_NAME: 'iHD' },
+      ...(options?.env ? { env: { ...process.env, ...options.env } } : {}),
     })
 
-    if (onOutput && child.stderr) {
+    if (options?.onOutput && child.stderr) {
       child.stderr.on('data', (data: Buffer) => {
-        onOutput(data.toString())
+        options.onOutput!(data.toString())
       })
     }
 
