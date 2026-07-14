@@ -50,8 +50,8 @@ export default function App() {
         <Text bold color="yellow">
           ⚠️ 缺少依赖:
         </Text>
-        {missingDeps.ffmpeg && <Text color="yellow">  - ffmpeg 未安装, 请执行: sudo apt install ffmpeg</Text>}
-        {missingDeps.ffprobe && <Text color="yellow">  - ffprobe 未安装, 请执行: sudo apt install ffmpeg</Text>}
+        {missingDeps.ffmpeg && <Text color="yellow"> - ffmpeg 未安装, 请执行: sudo apt install ffmpeg</Text>}
+        {missingDeps.ffprobe && <Text color="yellow"> - ffprobe 未安装, 请执行: sudo apt install ffmpeg</Text>}
         <Text color="yellow">---------------------------------</Text>
       </>
     ) : null

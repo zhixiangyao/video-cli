@@ -11,6 +11,6 @@
   "bracketSpacing": true,
   "endOfLine": "lf",
   "insertFinalNewline": true,
-  "sortPackageJson": false,
+  "sortPackageJson": true,
   "ignorePatterns": ["**/node_modules/**", "**/dist/**", "pnpm-lock.yaml"]
 }
