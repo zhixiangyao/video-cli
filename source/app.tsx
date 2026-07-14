@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Text, Box } from 'ink'
+import { Text, Box, useInput } from 'ink'
 import Menu from './components/Menu.tsx'
 import CutVideo from './components/CutVideo.tsx'
 import ToH265 from './components/ToH265.tsx'
@@ -30,18 +30,20 @@ export default function App() {
     checkDependencies().then(setMissingDeps)
 
     const onResize = () => {
-      const h = process.stdout.rows || 24
-      const w = process.stdout.columns || 80
-      setTermHeight(h)
-      setTermWidth(w)
-      // 更新滚动区域，禁止 trackpad 滚动
-      process.stdout.write(`\x1b[1;${h - 1}r`)
+      setTermHeight(process.stdout.rows)
+      setTermWidth(process.stdout.columns)
     }
     process.stdout.on('resize', onResize)
     return () => {
       process.stdout.off('resize', onResize)
     }
   }, [])
+
+  useInput((input) => {
+    if (input === 'q') {
+      process.exit(0)
+    }
+  })
 
   const handleMenuSelect = (choice: string) => {
     const trimmed = choice.trim()
@@ -76,16 +78,9 @@ export default function App() {
   }
 
   return (
-    <Box
-      borderStyle="round"
-      borderColor="cyan"
-      width={termWidth}
-      height={termHeight - 1}
-      flexDirection="column"
-      padding={1}
-    >
+    <>
       {warning}
       {renderScreen()}
-    </Box>
+    </>
   )
 }
