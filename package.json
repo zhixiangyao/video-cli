@@ -1,0 +1,37 @@
+{
+  "name": "video-cli",
+  "version": "0.0.0",
+  "license": "MIT",
+  "bin": "dist/cli.js",
+  "type": "module",
+  "packageManager": "pnpm@11.12.0",
+  "engines": {
+    "node": ">=26.5.0",
+    "pnpm": ">=11.12.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch source/cli.tsx",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint --fix",
+    "lint:check": "oxlint"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "ink": "7.1.0",
+    "meow": "14.1.0",
+    "react": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.1",
+    "@types/react": "19.2.17",
+    "oxfmt": "0.58.0",
+    "oxlint": "1.73.0",
+    "tsx": "4.23.0",
+    "typescript": "7.0.2"
+  }
+}
