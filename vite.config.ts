@@ -5,16 +5,20 @@ const outDir = 'dist'
 const outFileName = 'cli.mjs'
 
 export default defineConfig({
+  ssr: {
+    noExternal: true,
+  },
   build: {
-    ssr: 'source/cli.tsx',
-    target: 'esnext',
+    ssr: true,
     outDir,
     reportCompressedSize: false,
-    minify: 'oxc',
+    minify: false,
     rolldownOptions: {
+      input: 'source/cli.tsx',
       output: {
         entryFileNames: outFileName,
-        banner: ['#!/usr/bin/env node'].join('\n'),
+        postBanner: ['#!/usr/bin/env node'].join('\n'),
+        codeSplitting: false,
       },
     },
   },
