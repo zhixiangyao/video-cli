@@ -15,7 +15,7 @@ export default defineConfig({
     reportCompressedSize: false,
     minify: false,
     rolldownOptions: {
-      input: 'source/cli.tsx',
+      input: 'src/cli.tsx',
       output: {
         entryFileNames: outFileName,
         postBanner: ['#!/usr/bin/env node'].join('\n'),

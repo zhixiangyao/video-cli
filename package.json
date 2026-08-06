@@ -24,7 +24,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "tsx source/cli.tsx",
+    "dev": "tsx src/cli.tsx",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
