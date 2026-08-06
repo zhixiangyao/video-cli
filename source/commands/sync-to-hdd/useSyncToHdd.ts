@@ -1,28 +1,22 @@
 import { spawn } from 'node:child_process'
 import { mkdir, stat } from 'node:fs/promises'
 
-import { Text } from 'ink'
 import { useEffect, useRef, useState } from 'react'
 
-import { dirExists, globAllFiles, join, dirname, relative } from '../lib/files.ts'
-import BackToMenu from './BackToMenu.tsx'
-import TextInput from './TextInput.tsx'
+import { useValidatedInput } from '../../hooks/useValidatedInput.ts'
+import { useYnConfirm } from '../../hooks/useYnConfirm.ts'
+import { dirExists, dirname, globAllFiles, join, relative } from '../../lib/files.ts'
 
 const PROGRESS_INTERVAL_MS = 500
-const BAR_WIDTH = 20
 
-type Props = {
-  onBack: () => void
-}
-
-type FileItem = {
+export type FileItem = {
   file: string
   rel: string
   dst: string
   size: number
 }
 
-type Step =
+export type Step =
   | { type: 'input-src' }
   | { type: 'input-dst'; srcDir: string }
   | { type: 'scanning' }
@@ -41,14 +35,11 @@ type Step =
   | { type: 'done'; message: string }
   | { type: 'error'; message: string }
 
-const formatMB = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
-const formatGB = (bytes: number) => `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
-
-export default function SyncToHdd({ onBack }: Props) {
+/** 机械硬盘优化同步 (sync-to-hdd) 的步骤状态机与拷贝逻辑 */
+export function useSyncToHdd() {
   const [step, setStep] = useState<Step>({ type: 'input-src' })
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const [inputError, setInputError] = useState<string | null>(null)
-  const [inputKey, setInputKey] = useState(0)
+  const pathInput = useValidatedInput()
 
   useEffect(() => {
     return () => {
@@ -59,11 +50,10 @@ export default function SyncToHdd({ onBack }: Props) {
   const handleSrcInput = (answer: string) => {
     const srcDir = answer.trim()
     if (!srcDir) {
-      setInputError('错误: 必须输入源文件夹路径.')
-      setInputKey((k) => k + 1)
+      pathInput.reject('错误: 必须输入源文件夹路径.')
       return
     }
-    setInputError(null)
+    pathInput.accept()
 
     if (!dirExists(srcDir)) {
       setStep({ type: 'error', message: `❌ 源文件夹不存在: ${srcDir}` })
@@ -77,11 +67,10 @@ export default function SyncToHdd({ onBack }: Props) {
     const current = step as { type: 'input-dst'; srcDir: string }
     const dstDir = answer.trim()
     if (!dstDir) {
-      setInputError('错误: 必须输入目标文件夹路径.')
-      setInputKey((k) => k + 1)
+      pathInput.reject('错误: 必须输入目标文件夹路径.')
       return
     }
-    setInputError(null)
+    pathInput.accept()
 
     setStep({ type: 'scanning' })
 
@@ -112,23 +101,6 @@ export default function SyncToHdd({ onBack }: Props) {
     const totalSize = items.reduce((sum, item) => sum + item.size, 0)
 
     setStep({ type: 'confirm', srcDir: current.srcDir, dstDir, files: items, totalSize })
-  }
-
-  const handleConfirm = (answer: string) => {
-    const current = step as { type: 'confirm'; files: FileItem[] }
-    const trimmed = answer.trim()
-    if (trimmed !== 'y' && trimmed !== 'Y' && trimmed !== 'n' && trimmed !== 'N') {
-      setInputError('错误: 必须选择 y (是) 或 n (否).')
-      setInputKey((k) => k + 1)
-      return
-    }
-    setInputError(null)
-
-    if (/^[Yy]$/.test(trimmed)) {
-      runCopy(current.files)
-    } else {
-      setStep({ type: 'done', message: '🛒 操作已取消.' })
-    }
   }
 
   const copyWithProgress = (filepath: string, dstFile: string, totalSize: number): Promise<void> => {
@@ -239,75 +211,22 @@ export default function SyncToHdd({ onBack }: Props) {
     })
   }
 
-  if (step.type === 'input-src') {
-    return (
-      <>
-        <Text color="cyan">📀 机械硬盘优化同步 (串行拷贝, 保持轨道顺滑)</Text>
-        {inputError && <Text color="red">{inputError}</Text>}
-        <TextInput key={inputKey} prompt="源文件夹路径: " onSubmit={handleSrcInput} />
-      </>
-    )
+  const confirm = useYnConfirm({
+    onConfirm: () => {
+      const current = step as { type: 'confirm'; files: FileItem[] }
+      runCopy(current.files)
+    },
+    onCancel: () => setStep({ type: 'done', message: '🛒 操作已取消.' }),
+  })
+
+  return {
+    step,
+    pathInputError: pathInput.inputError,
+    pathInputKey: pathInput.inputKey,
+    confirmInputError: confirm.inputError,
+    confirmInputKey: confirm.inputKey,
+    handleSrcInput,
+    handleDstInput,
+    handleConfirm: confirm.handleAnswer,
   }
-
-  if (step.type === 'input-dst') {
-    return (
-      <>
-        <Text>源文件夹: {step.srcDir}</Text>
-        {inputError && <Text color="red">{inputError}</Text>}
-        <TextInput key={inputKey} prompt="目标文件夹路径: " onSubmit={handleDstInput} />
-      </>
-    )
-  }
-
-  if (step.type === 'scanning') {
-    return <Text color="cyan">正在扫描源文件夹...</Text>
-  }
-
-  if (step.type === 'confirm') {
-    return (
-      <>
-        <Text color="cyan">
-          找到 {step.files.length} 个文件, 总计 {formatGB(step.totalSize)}
-        </Text>
-        <Text>源文件夹: {step.srcDir}</Text>
-        <Text>目标文件夹: {step.dstDir}</Text>
-        {inputError && <Text color="red">{inputError}</Text>}
-        <TextInput key={inputKey} prompt="确认开始同步? (y/n): " onSubmit={handleConfirm} />
-      </>
-    )
-  }
-
-  if (step.type === 'running') {
-    const item = step.files[step.index]!
-    const percent = step.currentSize > 0 ? Math.min(100, (step.copiedBytes / step.currentSize) * 100) : 100
-    const filled = Math.round((percent / 100) * BAR_WIDTH)
-    const bar = '█'.repeat(filled) + '░'.repeat(BAR_WIDTH - filled)
-    const copiedCount = step.index - step.skipped - step.failed
-
-    return (
-      <>
-        <Text color="cyan">📀 机械硬盘优化同步中...</Text>
-        <Text color="yellow">
-          [{step.index + 1}/{step.files.length}] {item.rel} ({formatMB(item.size)})
-        </Text>
-        <Text>
-          {bar} {percent.toFixed(1)}%{step.speed > 0 ? ` | ${(step.speed / 1024 / 1024).toFixed(1)} MB/s` : ''}
-        </Text>
-        <Text color="gray">
-          已复制 {copiedCount} 个, 跳过 {step.skipped} 个, 失败 {step.failed} 个
-        </Text>
-        {step.lastError ? <Text color="red">{step.lastError}</Text> : null}
-      </>
-    )
-  }
-
-  if (step.type === 'done') {
-    return <BackToMenu message={step.message} color="green" onBack={onBack} />
-  }
-
-  if (step.type === 'error') {
-    return <BackToMenu message={step.message} color="red" onBack={onBack} />
-  }
-
-  return null
 }

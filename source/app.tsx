@@ -1,48 +1,30 @@
 import { Text, useInput } from 'ink'
-import { useState, useEffect } from 'react'
+import type { ComponentType } from 'react'
 
-import CutVideo from './components/CutVideo.tsx'
+import CutVideo from './commands/cut-video/index.tsx'
+import SyncToHdd from './commands/sync-to-hdd/index.tsx'
+import ToH265 from './commands/to-h265/index.tsx'
 import Menu from './components/Menu.tsx'
-import SyncToHdd from './components/SyncToHdd.tsx'
-import ToH265 from './components/ToH265.tsx'
-import { checkDependencies, type MissingDeps } from './lib/ffmpeg.ts'
+import { useDependencies } from './hooks/useDependencies.ts'
+import { useScreenRouter, type Screen } from './hooks/useScreenRouter.ts'
 
-type Screen = 'menu' | 'cut-video' | 'to-h265' | 'sync-to-hdd'
+type CommandScreen = Exclude<Screen, 'menu'>
 
-const SCREEN_MAP = [
-  { key: '1', screen: 'cut-video' as const, Component: CutVideo },
-  { key: '2', screen: 'to-h265' as const, Component: ToH265 },
-  { key: '3', screen: 'sync-to-hdd' as const, Component: SyncToHdd },
-] as const
-
-const screenComponentMap = new Map(SCREEN_MAP.map((s) => [s.screen, s.Component]))
+const screenComponentMap = new Map<CommandScreen, ComponentType<{ onBack: () => void }>>([
+  ['cut-video', CutVideo],
+  ['to-h265', ToH265],
+  ['sync-to-hdd', SyncToHdd],
+])
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('menu')
-  const [missingDeps, setMissingDeps] = useState<MissingDeps | null>(null)
-
-  useEffect(() => {
-    checkDependencies().then(setMissingDeps)
-  }, [])
+  const { screen, handleMenuSelect, goBack } = useScreenRouter()
+  const { missingDeps } = useDependencies()
 
   useInput((input) => {
     if (input === 'q') {
       process.exit(0)
     }
   })
-
-  const handleMenuSelect = (choice: string) => {
-    const trimmed = choice.trim()
-    if (trimmed === '4') {
-      process.exit(0)
-    }
-    const config = SCREEN_MAP.find((s) => s.key === trimmed)
-    if (config) {
-      setScreen(config.screen)
-    }
-  }
-
-  const goBack = () => setScreen('menu')
 
   const warning =
     missingDeps && (screen === 'cut-video' || screen === 'to-h265') && (missingDeps.ffmpeg || missingDeps.ffprobe) ? (
