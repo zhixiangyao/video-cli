@@ -24,6 +24,8 @@ type Step =
 export default function ToH265({ onBack }: Props) {
   const [step, setStep] = useState<Step>({ type: 'loading' })
   const checkingRef = useRef<string | null>(null)
+  const [inputError, setInputError] = useState<string | null>(null)
+  const [inputKey, setInputKey] = useState(0)
 
   useEffect(() => {
     globMp4FilesFlat().then((files) => {
@@ -64,7 +66,14 @@ export default function ToH265({ onBack }: Props) {
 
   const handleModeChoice = async (choice: string) => {
     const current = step as { type: 'choose-mode'; file: string; codec: string }
-    const mode = choice.trim() === '2' ? 'cpu' : 'vaapi'
+    const trimmed = choice.trim()
+    if (trimmed !== '1' && trimmed !== '2') {
+      setInputError('错误: 必须选择 1 (GPU) 或 2 (CPU).')
+      setInputKey((k) => k + 1)
+      return
+    }
+    setInputError(null)
+    const mode = trimmed === '2' ? 'cpu' : 'vaapi'
     const { name: baseName, ext } = parse(current.file)
     const outputFile = `${baseName}-H265${ext}`
 
@@ -77,7 +86,14 @@ export default function ToH265({ onBack }: Props) {
 
   const handleOverwrite = (answer: string) => {
     const current = step as { type: 'confirm-overwrite'; file: string; outputFile: string; mode: string }
-    if (/^[Yy]$/.test(answer.trim())) {
+    const trimmed = answer.trim()
+    if (trimmed !== 'y' && trimmed !== 'Y' && trimmed !== 'n' && trimmed !== 'N') {
+      setInputError('错误: 必须选择 y (是) 或 n (否).')
+      setInputKey((k) => k + 1)
+      return
+    }
+    setInputError(null)
+    if (/^[Yy]$/.test(trimmed)) {
       runTranscode(current.file, current.outputFile, current.mode)
     } else {
       setStep({ type: 'done', message: '🛒 操作已取消.' })
@@ -190,7 +206,8 @@ export default function ToH265({ onBack }: Props) {
         <Text color="cyan">选择编码压缩模式 / Select Encoding Mode:</Text>
         <Text>1) GPU 硬件加速 (VAAPI - 速度快/占用低)</Text>
         <Text>2) CPU 软件压缩 (libx265 - 耗时/质量极高/文件小)</Text>
-        <TextInput prompt="请输入选项 (1 或 2, 默认为 1): " onSubmit={handleModeChoice} />
+        {inputError && <Text color="red">{inputError}</Text>}
+        <TextInput key={inputKey} prompt="请输入选项 (1 或 2): " onSubmit={handleModeChoice} />
       </>
     )
   }
@@ -199,7 +216,8 @@ export default function ToH265({ onBack }: Props) {
     return (
       <>
         <Text color="yellow">⚠️ 输出文件 '{step.outputFile}' 已存在.</Text>
-        <TextInput prompt="是否覆盖? (y/N): " onSubmit={handleOverwrite} />
+        {inputError && <Text color="red">{inputError}</Text>}
+        <TextInput key={inputKey} prompt="是否覆盖? (y/n): " onSubmit={handleOverwrite} />
       </>
     )
   }

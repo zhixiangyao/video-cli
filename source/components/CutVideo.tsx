@@ -21,6 +21,8 @@ type Step =
 
 export default function CutVideo({ onBack }: Props) {
   const [step, setStep] = useState<Step>({ type: 'loading' })
+  const [inputError, setInputError] = useState<string | null>(null)
+  const [inputKey, setInputKey] = useState(0)
 
   useEffect(() => {
     globMp4FilesFlat().then((files) => {
@@ -58,7 +60,14 @@ export default function CutVideo({ onBack }: Props) {
 
   const handleOverwrite = (answer: string) => {
     const current = step as { type: 'confirm-overwrite'; file: string; outputFile: string; startTime: string }
-    if (/^[Yy]$/.test(answer.trim())) {
+    const trimmed = answer.trim()
+    if (trimmed !== 'y' && trimmed !== 'Y' && trimmed !== 'n' && trimmed !== 'N') {
+      setInputError('错误: 必须选择 y (是) 或 n (否).')
+      setInputKey((k) => k + 1)
+      return
+    }
+    setInputError(null)
+    if (/^[Yy]$/.test(trimmed)) {
       runCut(current.file, current.outputFile, current.startTime)
     } else {
       setStep({ type: 'done', message: '🛒 操作已取消.' })
@@ -122,7 +131,8 @@ export default function CutVideo({ onBack }: Props) {
     return (
       <>
         <Text color="yellow">⚠️ 输出文件 '{step.outputFile}' 已存在.</Text>
-        <TextInput prompt="是否覆盖? (y/N): " onSubmit={handleOverwrite} />
+        {inputError && <Text color="red">{inputError}</Text>}
+        <TextInput key={inputKey} prompt="是否覆盖? (y/n): " onSubmit={handleOverwrite} />
       </>
     )
   }
