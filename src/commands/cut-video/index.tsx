@@ -27,7 +27,7 @@ export default function CutVideo({ onBack }: Props) {
             {i + 1}) {file}
           </Text>
         ))}
-        <TextInput prompt="请输入序号: " onSubmit={handleFileChoice} />
+        <TextInput key="select-file" prompt="请输入序号: " onSubmit={handleFileChoice} />
       </>
     )
   }
@@ -39,7 +39,7 @@ export default function CutVideo({ onBack }: Props) {
     return (
       <>
         <Text color="yellow">⏱️ 请输入裁剪起始时间 (例如 41, 00:00:41):</Text>
-        <TextInput prompt={`✂️  裁剪起始时间 [${step.file}]: `} onSubmit={handleStartTime} />
+        <TextInput key="input-start-time" prompt={`✂️  裁剪起始时间 [${step.file}]: `} onSubmit={handleStartTime} />
       </>
     )
   }
