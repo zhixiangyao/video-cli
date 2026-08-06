@@ -1,22 +1,18 @@
 import { Text, useInput } from 'ink'
 import { useState, useEffect } from 'react'
 
-import AddCodecSuffix from './components/AddCodecSuffix.tsx'
 import CutVideo from './components/CutVideo.tsx'
 import Menu from './components/Menu.tsx'
-import RemoveCodecSuffix from './components/RemoveCodecSuffix.tsx'
-import SyncFolderName from './components/SyncFolderName.tsx'
+import SyncToHdd from './components/SyncToHdd.tsx'
 import ToH265 from './components/ToH265.tsx'
 import { checkDependencies, type MissingDeps } from './lib/ffmpeg.ts'
 
-type Screen = 'menu' | 'cut-video' | 'to-h265' | 'add-codec-suffix' | 'remove-codec-suffix' | 'sync-folder-name'
+type Screen = 'menu' | 'cut-video' | 'to-h265' | 'sync-to-hdd'
 
 const SCREEN_MAP = [
   { key: '1', screen: 'cut-video' as const, Component: CutVideo },
   { key: '2', screen: 'to-h265' as const, Component: ToH265 },
-  { key: '3', screen: 'add-codec-suffix' as const, Component: AddCodecSuffix },
-  { key: '4', screen: 'remove-codec-suffix' as const, Component: RemoveCodecSuffix },
-  { key: '5', screen: 'sync-folder-name' as const, Component: SyncFolderName },
+  { key: '3', screen: 'sync-to-hdd' as const, Component: SyncToHdd },
 ] as const
 
 const screenComponentMap = new Map(SCREEN_MAP.map((s) => [s.screen, s.Component]))
@@ -37,7 +33,7 @@ export default function App() {
 
   const handleMenuSelect = (choice: string) => {
     const trimmed = choice.trim()
-    if (trimmed === '6') {
+    if (trimmed === '4') {
       process.exit(0)
     }
     const config = SCREEN_MAP.find((s) => s.key === trimmed)

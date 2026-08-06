@@ -1,15 +1,7 @@
 import { statSync, existsSync } from 'node:fs'
 import { glob } from 'node:fs/promises'
 import { stat } from 'node:fs/promises'
-import { join, parse, dirname, basename } from 'node:path'
-
-export async function globMp4Files(baseDir = '.'): Promise<string[]> {
-  const results: string[] = []
-  for await (const entry of glob('**/*.{mp4,MP4,Mp4}', { cwd: baseDir })) {
-    results.push(join(baseDir, entry))
-  }
-  return results
-}
+import { join, parse, dirname, basename, relative } from 'node:path'
 
 export async function globMp4FilesFlat(baseDir = '.'): Promise<string[]> {
   const results: string[] = []
@@ -19,14 +11,12 @@ export async function globMp4FilesFlat(baseDir = '.'): Promise<string[]> {
   return results
 }
 
-export async function getDirectories(baseDir = '.'): Promise<string[]> {
+export async function globAllFiles(baseDir = '.'): Promise<string[]> {
   const results: string[] = []
-  for await (const entry of glob('**', { cwd: baseDir })) {
+  for await (const entry of glob('**/*', { cwd: baseDir })) {
     const full = join(baseDir, entry)
     try {
-      if ((await stat(full)).isDirectory()) {
-        if (full !== baseDir) results.push(full)
-      }
+      if ((await stat(full)).isFile()) results.push(full)
     } catch {
       // ignore stat errors
     }
@@ -57,4 +47,4 @@ export function safeFileName(filename: string): string {
   return filename
 }
 
-export { join, parse, dirname, basename }
+export { join, parse, dirname, basename, relative }

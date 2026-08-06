@@ -9,10 +9,8 @@ type Props = {
 const MENU_ITEMS = [
   { key: '1', label: '无损裁剪视频 (cut-video)' },
   { key: '2', label: '硬件转码至 H265 (to-h265)' },
-  { key: '3', label: '批量添加编码后缀 (add-codec-suffix)' },
-  { key: '4', label: '批量移除编码后缀 (remove-codec-suffix)' },
-  { key: '5', label: '同步文件夹名与视频名 (sync-folder-name)' },
-  { key: '6', label: '退出' },
+  { key: '3', label: '机械硬盘优化同步 (sync-to-hdd)' },
+  { key: '4', label: '退出' },
 ]
 
 export default function Menu({ onSelect }: Props) {
@@ -27,7 +25,7 @@ export default function Menu({ onSelect }: Props) {
           {item.key}) {item.label}
         </Text>
       ))}
-      <TextInput prompt="请选择功能 (1-6): " onSubmit={onSelect} />
+      <TextInput prompt="请选择功能 (1-4): " onSubmit={onSelect} />
     </>
   )
 }

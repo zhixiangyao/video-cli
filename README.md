@@ -6,15 +6,14 @@
 
 - **无损裁剪视频** — 使用 ffmpeg 无损切割 MP4 视频片段
 - **硬件转码至 H265** — 通过 VAAPI 硬件加速将视频转码为 H.265/HEVC 格式
-- **批量添加编码后缀** — 自动检测视频编码并将编码名追加到文件名
-- **批量移除编码后缀** — 移除文件名中的编码后缀（如 `-H264`、`-H265`）
-- **同步文件夹名与视频名** — 将目录名与目录内唯一 MP4 文件的文件名同步
+- **机械硬盘优化同步** — 大文件优先、串行顺序拷贝至机械硬盘，支持断点续传
 
 ## 环境要求
 
 - [Node.js](https://nodejs.org/) >= 26.5.0
 - [pnpm](https://pnpm.io/) >= 11.12.0
 - [ffmpeg](https://ffmpeg.org/) & ffprobe（裁剪和转码功能需要）
+- [ionice](https://man7.org/linux/man-pages/man1/ionice.1.html)（机械硬盘优化同步功能需要，Linux 自带）
 
 ```bash
 # Ubuntu/Debian
@@ -50,10 +49,8 @@ node dist/cli.js
 ---------------------------------
 1) 无损裁剪视频 (cut-video)
 2) 硬件转码至 H265 (to-h265)
-3) 批量添加编码后缀 (add-codec-suffix)
-4) 批量移除编码后缀 (remove-codec-suffix)
-5) 同步文件夹名与视频名 (sync-folder-name)
-6) 退出
+3) 机械硬盘优化同步 (sync-to-hdd)
+4) 退出
 ```
 
 ## 脚本
