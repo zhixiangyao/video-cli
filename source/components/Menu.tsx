@@ -1,4 +1,5 @@
 import { Text } from 'ink'
+
 import TextInput from './TextInput.tsx'
 
 type Props = {

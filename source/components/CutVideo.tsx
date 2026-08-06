@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
 import { Text, Newline } from 'ink'
-import TextInput from './TextInput.tsx'
-import BackToMenu from './BackToMenu.tsx'
-import { globMp4FilesFlat, fileExists, parse } from '../lib/files.ts'
+import { useState, useEffect } from 'react'
+
 import { runFfmpeg } from '../lib/ffmpeg.ts'
+import { globMp4FilesFlat, fileExists, parse } from '../lib/files.ts'
+import BackToMenu from './BackToMenu.tsx'
+import TextInput from './TextInput.tsx'
 
 type Props = {
   onBack: () => void

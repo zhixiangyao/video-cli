@@ -1,6 +1,7 @@
 import { render } from 'ink'
-import App from './app.tsx'
 import meow from 'meow'
+
+import App from './app.tsx'
 
 const helpMessage = `
 Usage

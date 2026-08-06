@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
-import { Text } from 'ink'
-import TextInput from './TextInput.tsx'
-import BackToMenu from './BackToMenu.tsx'
-import { globMp4Files, getDirectories, fileExists, dirExists, join, parse, dirname, basename } from '../lib/files.ts'
 import { rename } from 'node:fs/promises'
+
+import { Text } from 'ink'
+import { useState, useEffect } from 'react'
+
+import { globMp4Files, getDirectories, fileExists, dirExists, join, parse, dirname, basename } from '../lib/files.ts'
+import BackToMenu from './BackToMenu.tsx'
+import TextInput from './TextInput.tsx'
 
 type Props = {
   onBack: () => void

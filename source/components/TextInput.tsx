@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { Text, useInput } from 'ink'
+import { useState } from 'react'
 
 type Props = {
   prompt: string

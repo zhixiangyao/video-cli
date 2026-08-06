@@ -1,4 +1,5 @@
 import { chmodSync } from 'node:fs'
+
 import { defineConfig } from 'vite'
 
 const outDir = 'dist'

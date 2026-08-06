@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
 import { Text, useInput } from 'ink'
-import Menu from './components/Menu.tsx'
-import CutVideo from './components/CutVideo.tsx'
-import ToH265 from './components/ToH265.tsx'
+import { useState, useEffect } from 'react'
+
 import AddCodecSuffix from './components/AddCodecSuffix.tsx'
+import CutVideo from './components/CutVideo.tsx'
+import Menu from './components/Menu.tsx'
 import RemoveCodecSuffix from './components/RemoveCodecSuffix.tsx'
 import SyncFolderName from './components/SyncFolderName.tsx'
+import ToH265 from './components/ToH265.tsx'
 import { checkDependencies, type MissingDeps } from './lib/ffmpeg.ts'
 
 type Screen = 'menu' | 'cut-video' | 'to-h265' | 'add-codec-suffix' | 'remove-codec-suffix' | 'sync-folder-name'
