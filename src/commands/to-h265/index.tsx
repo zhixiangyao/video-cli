@@ -49,7 +49,7 @@ export default function ToH265({ onBack }: Props) {
     return (
       <>
         <Text>ℹ️ 当前视频编码: {step.codec}</Text>
-        <Text color="yellow">⚠️ 此视频已是 H265/HEVC 编码，无需转码.</Text>
+        <Text color="yellow">⚠️ 此视频已是 H265/HEVC 编码, 无需转码.</Text>
         <BackToMenu message="" onBack={onBack} />
       </>
     )
