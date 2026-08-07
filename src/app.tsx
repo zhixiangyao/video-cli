@@ -10,14 +10,19 @@ import { useScreenRouter, type Screen } from './hooks/useScreenRouter.ts'
 
 type CommandScreen = Exclude<Screen, 'menu'>
 
+type Props = {
+  /** 通过命令行子命令直接进入的页面, 默认进入菜单 */
+  initialScreen?: Screen
+}
+
 const screenComponentMap = new Map<CommandScreen, ComponentType<{ onBack: () => void }>>([
   ['cut-video', CutVideo],
   ['to-h265', ToH265],
   ['copy-to-hdd', CopyToHdd],
 ])
 
-export default function App() {
-  const { screen, handleMenuSelect, goBack } = useScreenRouter()
+export default function App({ initialScreen }: Props = {}) {
+  const { screen, handleMenuSelect, goBack } = useScreenRouter(initialScreen)
   const { missingFor } = useDependencies()
 
   useInput((input) => {
