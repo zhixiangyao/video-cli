@@ -1,5 +1,6 @@
 import { Text } from 'ink'
 
+import { useValidatedInput } from '../hooks/useValidatedInput.ts'
 import TextInput from './TextInput.tsx'
 
 type Props = {
@@ -13,19 +14,35 @@ const MENU_ITEMS = [
   { key: '4', label: '退出程序' },
 ]
 
+const VALID_KEYS = MENU_ITEMS.map((item) => item.key)
+
 export default function Menu({ onSelect }: Props) {
+  const { inputError, inputKey, reject, accept } = useValidatedInput()
+
+  const handleSelect = (choice: string) => {
+    const trimmed = choice.trim()
+    if (VALID_KEYS.includes(trimmed)) {
+      accept()
+      onSelect(trimmed)
+    } else {
+      reject(`无效选项 "${trimmed}", 请输入 1-4`)
+    }
+  }
+
   return (
     <>
       <Text bold color="magenta">
         欢迎使用视频工具箱
       </Text>
-      <Text>---------------------------------</Text>
+      <Text>--------------------------------------------------------------</Text>
       {MENU_ITEMS.map((item) => (
         <Text key={item.key}>
           {item.key}) {item.label}
         </Text>
       ))}
-      <TextInput prompt="请选择功能 (1-4): " onSubmit={onSelect} />
+      {inputError && <Text color="red">{inputError}</Text>}
+      <TextInput key={inputKey} prompt="请选择功能 (1-4): " onSubmit={handleSelect} />
+      <Text>--------------------------------------------------------------</Text>
     </>
   )
 }
