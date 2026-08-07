@@ -1,14 +1,29 @@
 import { useEffect, useState } from 'react'
 
-import { checkDependencies, type MissingDeps } from '../lib/ffmpeg.ts'
+import { checkAllTools, TOOLS, type ToolId, type ToolSpec } from '../lib/deps.ts'
+import type { Screen } from './useScreenRouter.ts'
 
-/** 启动时检查 ffmpeg / ffprobe 依赖是否可用 */
+/** 各命令页面需要的依赖工具 */
+export const SCREEN_TOOLS: Record<Screen, ToolId[]> = {
+  menu: [],
+  'cut-video': ['ffmpeg', 'ffprobe'],
+  'to-h265': ['ffmpeg', 'ffprobe'],
+  'copy-to-hdd': ['ionice', 'dd', 'df', 'lsblk'],
+}
+
+/** 启动时检测各工具依赖是否可用 */
 export function useDependencies() {
-  const [missingDeps, setMissingDeps] = useState<MissingDeps | null>(null)
+  const [missingTools, setMissingTools] = useState<Set<ToolId> | null>(null)
 
   useEffect(() => {
-    checkDependencies().then(setMissingDeps)
+    checkAllTools().then(setMissingTools)
   }, [])
 
-  return { missingDeps }
+  /** 返回当前页面缺失的依赖, 未检测完成时为 null (不提示) */
+  const missingFor = (screen: Screen): ToolSpec[] | null => {
+    if (missingTools === null) return null
+    return SCREEN_TOOLS[screen].filter((id) => missingTools.has(id)).map((id) => TOOLS[id])
+  }
+
+  return { missingFor }
 }

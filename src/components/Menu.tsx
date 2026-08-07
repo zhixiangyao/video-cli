@@ -7,10 +7,10 @@ type Props = {
 }
 
 const MENU_ITEMS = [
-  { key: '1', label: '无损裁剪视频 (cut-video)' },
-  { key: '2', label: '硬件转码至 H265 (to-h265)' },
-  { key: '3', label: '机械硬盘优化同步 (sync-to-hdd)' },
-  { key: '4', label: '退出' },
+  { key: '1', label: '裁剪视频片段(无损,不重新编码) (cut-video)' },
+  { key: '2', label: '硬件转码为 H.265(体积更小) (to-h265)' },
+  { key: '3', label: '复制到机械硬盘(串行拷贝,保持轨道顺滑) (copy-to-hdd)' },
+  { key: '4', label: '退出程序' },
 ]
 
 export default function Menu({ onSelect }: Props) {

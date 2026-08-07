@@ -1,8 +1,8 @@
 import { Text, useInput } from 'ink'
 import type { ComponentType } from 'react'
 
+import CopyToHdd from './commands/copy-to-hdd/index.tsx'
 import CutVideo from './commands/cut-video/index.tsx'
-import SyncToHdd from './commands/sync-to-hdd/index.tsx'
 import ToH265 from './commands/to-h265/index.tsx'
 import Menu from './components/Menu.tsx'
 import { useDependencies } from './hooks/useDependencies.ts'
@@ -13,12 +13,12 @@ type CommandScreen = Exclude<Screen, 'menu'>
 const screenComponentMap = new Map<CommandScreen, ComponentType<{ onBack: () => void }>>([
   ['cut-video', CutVideo],
   ['to-h265', ToH265],
-  ['sync-to-hdd', SyncToHdd],
+  ['copy-to-hdd', CopyToHdd],
 ])
 
 export default function App() {
   const { screen, handleMenuSelect, goBack } = useScreenRouter()
-  const { missingDeps } = useDependencies()
+  const { missingFor } = useDependencies()
 
   useInput((input) => {
     if (input === 'q') {
@@ -26,14 +26,19 @@ export default function App() {
     }
   })
 
+  const missingDeps = missingFor(screen)
   const warning =
-    missingDeps && (screen === 'cut-video' || screen === 'to-h265') && (missingDeps.ffmpeg || missingDeps.ffprobe) ? (
+    missingDeps && missingDeps.length > 0 ? (
       <>
         <Text bold color="yellow">
           ⚠️ 缺少依赖:
         </Text>
-        {missingDeps.ffmpeg && <Text color="yellow"> - ffmpeg 未安装, 请执行: sudo apt install ffmpeg</Text>}
-        {missingDeps.ffprobe && <Text color="yellow"> - ffprobe 未安装, 请执行: sudo apt install ffmpeg</Text>}
+        {missingDeps.map((tool) => (
+          <Text key={tool.id} color="yellow">
+            {' '}
+            - {tool.id} 未安装, 请执行: {tool.installHint}
+          </Text>
+        ))}
         <Text color="yellow">---------------------------------</Text>
       </>
     ) : null

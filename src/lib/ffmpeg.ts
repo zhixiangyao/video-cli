@@ -3,22 +3,6 @@ import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
 
-async function checkCommand(cmd: string): Promise<boolean> {
-  try {
-    await execFileAsync(cmd, ['-version'])
-    return true
-  } catch {
-    return false
-  }
-}
-
-export type MissingDeps = { ffmpeg: boolean; ffprobe: boolean }
-
-export async function checkDependencies(): Promise<MissingDeps> {
-  const [ffmpeg, ffprobe] = await Promise.all([checkCommand('ffmpeg'), checkCommand('ffprobe')])
-  return { ffmpeg: !ffmpeg, ffprobe: !ffprobe }
-}
-
 export async function getCodec(filepath: string): Promise<string | null> {
   try {
     const { stdout } = await execFileAsync('ffprobe', [

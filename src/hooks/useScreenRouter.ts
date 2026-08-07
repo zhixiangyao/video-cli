@@ -1,11 +1,11 @@
 import { useState } from 'react'
 
-export type Screen = 'menu' | 'cut-video' | 'to-h265' | 'sync-to-hdd'
+export type Screen = 'menu' | 'cut-video' | 'to-h265' | 'copy-to-hdd'
 
 const SCREEN_KEYS: Record<string, Screen> = {
   '1': 'cut-video',
   '2': 'to-h265',
-  '3': 'sync-to-hdd',
+  '3': 'copy-to-hdd',
 }
 
 /** 管理菜单 → 各命令页面 → 返回菜单 的页面路由状态 */

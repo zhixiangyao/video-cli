@@ -4,16 +4,16 @@
 
 ## 功能
 
-- **无损裁剪视频** — 使用 ffmpeg 无损切割 MP4 视频片段
-- **硬件转码至 H265** — 通过 VAAPI 硬件加速将视频转码为 H.265/HEVC 格式
-- **机械硬盘优化同步** — 大文件优先、串行顺序拷贝至机械硬盘，支持断点续传
+- **裁剪视频片段(无损,不重新编码)** — 使用 ffmpeg 无损切割 MP4 视频片段
+- **硬件转码为 H.265(体积更小)** — 通过 VAAPI 硬件加速将视频转码为 H.265/HEVC 格式
+- **复制到机械硬盘(串行拷贝,保持轨道顺滑)** — 源可为单个文件或文件夹，串行顺序拷贝至机械硬盘（自动校验目标为文件夹、可写且位于机械硬盘），大文件优先，支持断点续传
 
 ## 环境要求
 
 - [Node.js](https://nodejs.org/) >= 26.5.0
 - [pnpm](https://pnpm.io/) >= 11.12.0
 - [ffmpeg](https://ffmpeg.org/) & ffprobe（裁剪和转码功能需要）
-- [ionice](https://man7.org/linux/man-pages/man1/ionice.1.html)（机械硬盘优化同步功能需要，Linux 自带）
+- [ionice](https://man7.org/linux/man-pages/man1/ionice.1.html)（复制到机械硬盘功能需要，Linux 自带）
 
 ```bash
 # Ubuntu/Debian
@@ -47,10 +47,10 @@ node dist/cli.js
 ```
 欢迎使用视频工具箱
 ---------------------------------
-1) 无损裁剪视频 (cut-video)
-2) 硬件转码至 H265 (to-h265)
-3) 机械硬盘优化同步 (sync-to-hdd)
-4) 退出
+1) 裁剪视频片段(无损,不重新编码) (cut-video)
+2) 硬件转码为 H.265(体积更小) (to-h265)
+3) 复制到机械硬盘(串行拷贝,保持轨道顺滑) (copy-to-hdd)
+4) 退出程序
 ```
 
 ## 脚本

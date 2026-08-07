@@ -1,11 +1,13 @@
 import { spawn } from 'node:child_process'
-import { mkdir, stat } from 'node:fs/promises'
+import { access, constants, mkdir, realpath, stat } from 'node:fs/promises'
+import { basename, join, relative, resolve } from 'node:path'
 
 import { useEffect, useRef, useState } from 'react'
 
 import { useValidatedInput } from '../../hooks/useValidatedInput.ts'
 import { useYnConfirm } from '../../hooks/useYnConfirm.ts'
-import { dirExists, dirname, globAllFiles, join, relative } from '../../lib/files.ts'
+import { checkDiskType } from '../../lib/disk.ts'
+import { dirname, globAllFiles } from '../../lib/files.ts'
 
 const PROGRESS_INTERVAL_MS = 500
 
@@ -18,9 +20,9 @@ export type FileItem = {
 
 export type Step =
   | { type: 'input-src' }
-  | { type: 'input-dst'; srcDir: string }
+  | { type: 'input-dst'; src: string }
   | { type: 'scanning' }
-  | { type: 'confirm'; srcDir: string; dstDir: string; files: FileItem[]; totalSize: number }
+  | { type: 'confirm'; src: string; dstDir: string; files: FileItem[]; totalSize: number }
   | {
       type: 'running'
       files: FileItem[]
@@ -35,8 +37,43 @@ export type Step =
   | { type: 'done'; message: string }
   | { type: 'error'; message: string }
 
-/** 机械硬盘优化同步 (sync-to-hdd) 的步骤状态机与拷贝逻辑 */
-export function useSyncToHdd() {
+/** 收集源中的文件: 源是文件则单文件, 是文件夹则递归收集; 过滤掉会写回自身的项 */
+async function collectItems(src: string, dstDir: string): Promise<FileItem[]> {
+  const st = await stat(src)
+
+  if (st.isFile()) {
+    const rel = basename(src)
+    const dst = join(dstDir, rel)
+    if (await isSamePath(src, dst)) return []
+    return [{ file: src, rel, dst, size: st.size }]
+  }
+
+  const items: FileItem[] = []
+  for (const filepath of await globAllFiles(src)) {
+    try {
+      const fst = await stat(filepath)
+      if (!fst.isFile()) continue
+      const rel = relative(src, filepath)
+      const dst = join(dstDir, rel)
+      if (await isSamePath(filepath, dst)) continue
+      items.push({ file: filepath, rel, dst, size: fst.size })
+    } catch {
+      // 忽略无法读取的文件
+    }
+  }
+  return items
+}
+
+async function isSamePath(a: string, b: string): Promise<boolean> {
+  try {
+    return (await realpath(a)) === (await realpath(b))
+  } catch {
+    return resolve(a) === resolve(b)
+  }
+}
+
+/** 复制到机械硬盘 (copy-to-hdd) 的步骤状态机与拷贝逻辑 */
+export function useCopyToHdd() {
   const [step, setStep] = useState<Step>({ type: 'input-src' })
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pathInput = useValidatedInput()
@@ -47,24 +84,29 @@ export function useSyncToHdd() {
     }
   }, [])
 
-  const handleSrcInput = (answer: string) => {
-    const srcDir = answer.trim()
-    if (!srcDir) {
-      pathInput.reject('错误: 必须输入源文件夹路径.')
+  const handleSrcInput = async (answer: string) => {
+    const src = answer.trim()
+    if (!src) {
+      pathInput.reject('错误: 必须输入源路径.')
       return
     }
     pathInput.accept()
 
-    if (!dirExists(srcDir)) {
-      setStep({ type: 'error', message: `❌ 源文件夹不存在: ${srcDir}` })
+    const st = await stat(src).catch(() => null)
+    if (!st) {
+      setStep({ type: 'error', message: `❌ 源不存在: ${src}` })
+      return
+    }
+    if (!st.isFile() && !st.isDirectory()) {
+      setStep({ type: 'error', message: `❌ 源既不是文件也不是文件夹: ${src}` })
       return
     }
 
-    setStep({ type: 'input-dst', srcDir })
+    setStep({ type: 'input-dst', src })
   }
 
   const handleDstInput = async (answer: string) => {
-    const current = step as { type: 'input-dst'; srcDir: string }
+    const current = step as { type: 'input-dst'; src: string }
     const dstDir = answer.trim()
     if (!dstDir) {
       pathInput.reject('错误: 必须输入目标文件夹路径.')
@@ -72,27 +114,49 @@ export function useSyncToHdd() {
     }
     pathInput.accept()
 
-    setStep({ type: 'scanning' })
-
-    if (!dirExists(dstDir)) {
-      await mkdir(dstDir, { recursive: true })
+    // 1. 目标已存在时必须是文件夹
+    const dstStat = await stat(dstDir).catch(() => null)
+    if (dstStat && !dstStat.isDirectory()) {
+      setStep({ type: 'error', message: `❌ 目标路径不是文件夹: ${dstDir}` })
+      return
     }
 
-    const items: FileItem[] = []
-    for (const filepath of await globAllFiles(current.srcDir)) {
+    // 2. 不存在则创建
+    if (!dstStat) {
       try {
-        const st = await stat(filepath)
-        if (st.isFile()) {
-          const rel = relative(current.srcDir, filepath)
-          items.push({ file: filepath, rel, dst: join(dstDir, rel), size: st.size })
-        }
+        await mkdir(dstDir, { recursive: true })
       } catch {
-        // 忽略无法读取的文件
+        setStep({ type: 'error', message: `❌ 无法创建目标文件夹: ${dstDir}` })
+        return
       }
     }
 
+    // 3. 检查写权限
+    try {
+      await access(dstDir, constants.W_OK)
+    } catch {
+      setStep({ type: 'error', message: `❌ 目标文件夹没有写权限: ${dstDir}` })
+      return
+    }
+
+    // 4. 检查目标是否位于机械硬盘
+    const disk = await checkDiskType(dstDir)
+    if (disk.kind !== 'hdd') {
+      const reason =
+        disk.kind === 'not-hdd'
+          ? '目标磁盘不是机械硬盘 (SSD / 虚拟磁盘)'
+          : disk.kind === 'not-disk'
+            ? '目标不在本地磁盘 (可能是 tmpfs / 网络挂载)'
+            : `无法检测目标磁盘: ${disk.message}`
+      setStep({ type: 'error', message: `❌ ${reason}: ${dstDir}` })
+      return
+    }
+
+    setStep({ type: 'scanning' })
+
+    const items = await collectItems(current.src, dstDir)
     if (items.length === 0) {
-      setStep({ type: 'error', message: '⚠️ 源文件夹内没有文件.' })
+      setStep({ type: 'error', message: '⚠️ 没有可复制的文件 (源为空, 或目标与源重叠).' })
       return
     }
 
@@ -100,7 +164,7 @@ export function useSyncToHdd() {
     items.sort((a, b) => b.size - a.size)
     const totalSize = items.reduce((sum, item) => sum + item.size, 0)
 
-    setStep({ type: 'confirm', srcDir: current.srcDir, dstDir, files: items, totalSize })
+    setStep({ type: 'confirm', src: current.src, dstDir, files: items, totalSize })
   }
 
   const copyWithProgress = (filepath: string, dstFile: string, totalSize: number): Promise<void> => {
@@ -207,7 +271,7 @@ export function useSyncToHdd() {
     const copied = files.length - skipped - failed
     setStep({
       type: 'done',
-      message: `🎉 同步完成! 源文件已保留. (复制 ${copied} 个, 跳过 ${skipped} 个, 失败 ${failed} 个)`,
+      message: `🎉 复制完成! 源文件已保留. (复制 ${copied} 个, 跳过 ${skipped} 个, 失败 ${failed} 个)`,
     })
   }
 

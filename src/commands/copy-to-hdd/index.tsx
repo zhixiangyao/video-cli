@@ -2,7 +2,7 @@ import { Text } from 'ink'
 
 import BackToMenu from '../../components/BackToMenu.tsx'
 import TextInput from '../../components/TextInput.tsx'
-import { useSyncToHdd } from './useSyncToHdd.ts'
+import { useCopyToHdd } from './useCopyToHdd.ts'
 
 const BAR_WIDTH = 20
 
@@ -13,7 +13,7 @@ type Props = {
   onBack: () => void
 }
 
-export default function SyncToHdd({ onBack }: Props) {
+export default function CopyToHdd({ onBack }: Props) {
   const {
     step,
     pathInputError,
@@ -23,14 +23,14 @@ export default function SyncToHdd({ onBack }: Props) {
     handleSrcInput,
     handleDstInput,
     handleConfirm,
-  } = useSyncToHdd()
+  } = useCopyToHdd()
 
   if (step.type === 'input-src') {
     return (
       <>
-        <Text color="cyan">📀 机械硬盘优化同步 (串行拷贝, 保持轨道顺滑)</Text>
+        <Text color="cyan">📀 复制到机械硬盘 (串行拷贝, 保持轨道顺滑)</Text>
         {pathInputError && <Text color="red">{pathInputError}</Text>}
-        <TextInput key={pathInputKey} prompt="源文件夹路径: " onSubmit={handleSrcInput} />
+        <TextInput key={pathInputKey} prompt="源路径 (文件或文件夹): " onSubmit={handleSrcInput} />
       </>
     )
   }
@@ -38,7 +38,7 @@ export default function SyncToHdd({ onBack }: Props) {
   if (step.type === 'input-dst') {
     return (
       <>
-        <Text>源文件夹: {step.srcDir}</Text>
+        <Text>源: {step.src}</Text>
         {pathInputError && <Text color="red">{pathInputError}</Text>}
         <TextInput key={pathInputKey} prompt="目标文件夹路径: " onSubmit={handleDstInput} />
       </>
@@ -46,7 +46,7 @@ export default function SyncToHdd({ onBack }: Props) {
   }
 
   if (step.type === 'scanning') {
-    return <Text color="cyan">正在扫描源文件夹...</Text>
+    return <Text color="cyan">正在扫描源...</Text>
   }
 
   if (step.type === 'confirm') {
@@ -55,10 +55,10 @@ export default function SyncToHdd({ onBack }: Props) {
         <Text color="cyan">
           找到 {step.files.length} 个文件, 总计 {formatGB(step.totalSize)}
         </Text>
-        <Text>源文件夹: {step.srcDir}</Text>
+        <Text>源: {step.src}</Text>
         <Text>目标文件夹: {step.dstDir}</Text>
         {confirmInputError && <Text color="red">{confirmInputError}</Text>}
-        <TextInput key={confirmInputKey} prompt="确认开始同步? (y/n): " onSubmit={handleConfirm} />
+        <TextInput key={confirmInputKey} prompt="确认开始复制? (y/n): " onSubmit={handleConfirm} />
       </>
     )
   }
@@ -72,7 +72,7 @@ export default function SyncToHdd({ onBack }: Props) {
 
     return (
       <>
-        <Text color="cyan">📀 机械硬盘优化同步中...</Text>
+        <Text color="cyan">📀 正在复制到机械硬盘...</Text>
         <Text color="yellow">
           [{step.index + 1}/{step.files.length}] {item.rel} ({formatMB(item.size)})
         </Text>
