@@ -32,6 +32,12 @@ async function deviceForPath(dirpath: string): Promise<string | null> {
   return source
 }
 
+/** 兼容处理: lsblk 输出的设备名可能是裸名 (如 sdb), 补全为可直接解析的完整路径 */
+function toDevicePath(name: string): string {
+  if (!name || name.startsWith('/')) return name
+  return `/dev/${name}`
+}
+
 /** 沿 lsblk 向上追溯到整块磁盘, 读取 ROTA 标记 (1 = 机械盘) */
 async function isRotational(device: string): Promise<boolean | null> {
   let current = device
@@ -39,7 +45,7 @@ async function isRotational(device: string): Promise<boolean | null> {
     const { stdout } = await execFileAsync('lsblk', ['-n', '-o', 'PKNAME', current])
     const parent = stdout.trim().split('\n')[0]?.trim()
     if (!parent) break
-    current = parent
+    current = toDevicePath(parent)
   }
   const { stdout } = await execFileAsync('lsblk', ['-n', '-d', '-o', 'ROTA', current])
   const rota = stdout.trim().split('\n')[0]?.trim()
