@@ -38,7 +38,24 @@ pnpm dev
 # 构建后运行
 pnpm build
 node dist/cli.mjs
+
+# 或打包为单文件二进制后直接运行
+pnpm bundle
+./dist/video-cli
 ```
+
+## 打包为单文件二进制
+
+`pnpm bundle` 基于 Node 官方 SEA(Single Executable Applications)把构建产物与 Node 运行时合并为单个可执行文件 `dist/video-cli`, 在无 node 环境的目标机器上也能直接运行:
+
+```bash
+pnpm bundle        # 构建 + 打包
+pnpm bundle:sea    # 仅重新打包(dist/cli.mjs 需已存在)
+./dist/video-cli   # 直接运行
+```
+
+- 产物为单个文件, 体积约 143MB(内含完整 Node 运行时), 目前仅支持 Linux
+- 依赖 ffmpeg 等外部工具的功能, 目标机器上仍需安装对应工具
 
 运行后默认显示交互式菜单, 选择对应功能即可; 也可通过子命令直接进入对应页面：
 
@@ -70,6 +87,8 @@ video-cli -h           # 查看帮助
 | ----------------- | ------------------- |
 | `pnpm dev`        | 开发模式运行        |
 | `pnpm build`      | TypeScript 编译     |
+| `pnpm bundle`     | 构建并打包为单文件二进制 |
+| `pnpm bundle:sea` | 仅打包(需先 build)  |
 | `pnpm typecheck`  | 类型检查            |
 | `pnpm lint`       | Lint 检查并自动修复 |
 | `pnpm lint:check` | 仅 Lint 检查        |
