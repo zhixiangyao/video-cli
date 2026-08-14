@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMp4Files } from '../../hooks/useMp4Files.ts'
 import { useValidatedInput } from '../../hooks/useValidatedInput.ts'
 import { useYnConfirm } from '../../hooks/useYnConfirm.ts'
-import { getCodec, runFfmpeg } from '../../lib/ffmpeg.ts'
+import { getCodec, probeDuration, runFfmpeg, type FfmpegProgress } from '../../lib/ffmpeg.ts'
 import { fileExists, parse } from '../../lib/files.ts'
 
 export type Step =
@@ -13,7 +13,7 @@ export type Step =
   | { type: 'already-h265'; file: string; codec: string }
   | { type: 'choose-mode'; file: string; codec: string }
   | { type: 'confirm-overwrite'; file: string; outputFile: string; mode: string }
-  | { type: 'running'; outputFile: string; mode: string; output: string }
+  | { type: 'running'; outputFile: string; mode: string; durationMs: number | null; outTimeMs: number; speed: string }
   | { type: 'done'; message: string }
   | { type: 'error'; message: string }
 
@@ -80,16 +80,20 @@ export function useToH265() {
   }
 
   const runTranscode = async (inputFile: string, outputFile: string, mode: string) => {
-    setStep({ type: 'running', outputFile, mode, output: '' })
+    const durationMs = await probeDuration(inputFile)
+    setStep({ type: 'running', outputFile, mode, durationMs, outTimeMs: 0, speed: '' })
 
-    const onOutput = (line: string) => {
+    const onProgress = (progress: FfmpegProgress) => {
       setStep((prev) => {
         if (prev.type === 'running') {
-          return { ...prev, output: prev.output + line }
+          return { ...prev, outTimeMs: progress.outTimeMs, speed: progress.speed }
         }
         return prev
       })
     }
+
+    // -nostats 关闭 stderr 统计输出, -progress pipe:1 在 stdout 输出 key=value 进度
+    const progressArgs = ['-nostats', '-progress', 'pipe:1', outputFile]
 
     try {
       if (mode === 'cpu') {
@@ -110,9 +114,9 @@ export function useToH265() {
             '+faststart',
             '-c:a',
             'copy',
-            outputFile,
+            ...progressArgs,
           ],
-          { onOutput },
+          { onProgress },
         )
       } else {
         await runFfmpeg(
@@ -132,14 +136,15 @@ export function useToH265() {
             '+faststart',
             '-c:a',
             'copy',
-            outputFile,
+            ...progressArgs,
           ],
-          { onOutput, env: { LIBVA_DRIVER_NAME: 'iHD' } },
+          { onProgress, env: { LIBVA_DRIVER_NAME: 'iHD' } },
         )
       }
       setStep({ type: 'done', message: `🎉 转码完成! -> ${outputFile}` })
-    } catch {
-      setStep({ type: 'error', message: '❌ 转码失败. 请查看上方错误日志.' })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setStep({ type: 'error', message: `❌ 转码失败: ${message}` })
     }
   }
 

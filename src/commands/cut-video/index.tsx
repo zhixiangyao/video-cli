@@ -1,7 +1,8 @@
-import { Newline, Text } from 'ink'
+import { Text } from 'ink'
 
 import BackToMenu from '../../components/BackToMenu.tsx'
 import Message from '../../components/Message.tsx'
+import ProgressBar from '../../components/ProgressBar.tsx'
 import TextInput from '../../components/TextInput.tsx'
 import { useCutVideo } from './useCutVideo.ts'
 
@@ -61,11 +62,13 @@ export default function CutVideo({ onBack }: Props) {
   }
 
   if (step.type === 'running') {
+    const percent = step.durationMs !== null ? Math.min(100, (step.outTimeMs / step.durationMs) * 100) : null
+    const speed = /^\d+(\.\d+)?x$/.test(step.speed) ? `| ${step.speed}` : ''
     return (
       <>
-        <Text color="green">🚀 开始无损裁剪... 输出文件: {step.outputFile}</Text>
-        <Newline />
-        <Text>{step.output}</Text>
+        <Text color="cyan">🚀 正在无损裁剪...</Text>
+        <Text>🎬 输出文件: {step.outputFile}</Text>
+        <ProgressBar percent={percent} extra={speed} />
       </>
     )
   }

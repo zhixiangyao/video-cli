@@ -2,10 +2,9 @@ import { Text } from 'ink'
 
 import BackToMenu from '../../components/BackToMenu.tsx'
 import Message from '../../components/Message.tsx'
+import ProgressBar from '../../components/ProgressBar.tsx'
 import TextInput from '../../components/TextInput.tsx'
 import { useCopyToHdd } from './useCopyToHdd.ts'
-
-const BAR_WIDTH = 20
 
 const formatMB = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
 const formatGB = (bytes: number) => `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
@@ -67,8 +66,6 @@ export default function CopyToHdd({ onBack }: Props) {
   if (step.type === 'running') {
     const item = step.files[step.index]!
     const percent = step.currentSize > 0 ? Math.min(100, (step.copiedBytes / step.currentSize) * 100) : 100
-    const filled = Math.round((percent / 100) * BAR_WIDTH)
-    const bar = '█'.repeat(filled) + '░'.repeat(BAR_WIDTH - filled)
     const copiedCount = step.index - step.skipped - step.failed
 
     return (
@@ -77,9 +74,10 @@ export default function CopyToHdd({ onBack }: Props) {
         <Text color="yellow">
           [{step.index + 1}/{step.files.length}] {item.rel} ({formatMB(item.size)})
         </Text>
-        <Text>
-          {bar} {percent.toFixed(1)}%{step.speed > 0 ? ` | ${(step.speed / 1024 / 1024).toFixed(1)} MB/s` : ''}
-        </Text>
+        <ProgressBar
+          percent={percent}
+          extra={step.speed > 0 ? `| ${(step.speed / 1024 / 1024).toFixed(1)} MB/s` : ''}
+        />
         <Text color="gray">
           已复制 {copiedCount} 个, 跳过 {step.skipped} 个, 失败 {step.failed} 个
         </Text>

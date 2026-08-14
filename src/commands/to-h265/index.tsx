@@ -1,7 +1,8 @@
-import { Newline, Text } from 'ink'
+import { Text } from 'ink'
 
 import BackToMenu from '../../components/BackToMenu.tsx'
 import Message from '../../components/Message.tsx'
+import ProgressBar from '../../components/ProgressBar.tsx'
 import TextInput from '../../components/TextInput.tsx'
 import { useToH265 } from './useToH265.ts'
 
@@ -86,12 +87,13 @@ export default function ToH265({ onBack }: Props) {
 
   if (step.type === 'running') {
     const label = step.mode === 'cpu' ? 'CPU 软件转码 (libx265)' : 'GPU 硬件加速转码 (VAAPI)'
+    const percent = step.durationMs !== null ? Math.min(100, (step.outTimeMs / step.durationMs) * 100) : null
+    const speed = /^\d+(\.\d+)?x$/.test(step.speed) ? `| ${step.speed}` : ''
     return (
       <>
-        <Text color="green">🚀 开始{label}...</Text>
+        <Text color="cyan">🚀 正在 {label}...</Text>
         <Text>🎬 输出文件: {step.outputFile}</Text>
-        <Newline />
-        <Text>{step.output}</Text>
+        <ProgressBar percent={percent} extra={speed} />
       </>
     )
   }

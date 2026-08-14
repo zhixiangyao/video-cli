@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { useMp4Files } from '../../hooks/useMp4Files.ts'
 import { useYnConfirm } from '../../hooks/useYnConfirm.ts'
-import { runFfmpeg } from '../../lib/ffmpeg.ts'
+import { parseTimeToMs, probeDuration, runFfmpeg, type FfmpegProgress } from '../../lib/ffmpeg.ts'
 import { fileExists, parse } from '../../lib/files.ts'
 
 export type Step =
@@ -10,7 +10,7 @@ export type Step =
   | { type: 'select-file'; files: string[] }
   | { type: 'input-start-time'; file: string }
   | { type: 'confirm-overwrite'; file: string; outputFile: string; startTime: string }
-  | { type: 'running'; outputFile: string; output: string }
+  | { type: 'running'; outputFile: string; durationMs: number | null; outTimeMs: number; speed: string }
   | { type: 'done'; message: string }
   | { type: 'error'; message: string }
 
@@ -53,22 +53,30 @@ export function useCutVideo() {
   }
 
   const runCut = async (inputFile: string, outputFile: string, startTime: string) => {
-    setStep({ type: 'running', outputFile, output: '' })
+    const inputDurationMs = await probeDuration(inputFile)
+    const startMs = parseTimeToMs(startTime)
+    // 裁剪后时长 ≈ 原时长 - 起始时间 (fast seek 会偏移少量, 仅用于估算进度)
+    const durationMs = inputDurationMs !== null && startMs !== null ? Math.max(0, inputDurationMs - startMs) : null
+    setStep({ type: 'running', outputFile, durationMs, outTimeMs: 0, speed: '' })
+
+    const onProgress = (progress: FfmpegProgress) => {
+      setStep((prev) => {
+        if (prev.type === 'running') {
+          return { ...prev, outTimeMs: progress.outTimeMs, speed: progress.speed }
+        }
+        return prev
+      })
+    }
 
     try {
-      await runFfmpeg(['-y', '-ss', startTime, '-i', inputFile, '-c', 'copy', outputFile], {
-        onOutput: (line) => {
-          setStep((prev) => {
-            if (prev.type === 'running') {
-              return { ...prev, output: prev.output + line }
-            }
-            return prev
-          })
-        },
-      })
+      await runFfmpeg(
+        ['-y', '-ss', startTime, '-i', inputFile, '-c', 'copy', '-nostats', '-progress', 'pipe:1', outputFile],
+        { onProgress },
+      )
       setStep({ type: 'done', message: `🎉 视频裁剪完成! -> ${outputFile}` })
-    } catch {
-      setStep({ type: 'error', message: '❌ 操作失败. 请查看上方错误日志.' })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setStep({ type: 'error', message: `❌ 操作失败: ${message}` })
     }
   }
 
