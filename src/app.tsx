@@ -1,10 +1,11 @@
-import { Box, Text, useInput, useWindowSize } from 'ink'
+import { Box, useInput, useWindowSize } from 'ink'
 import type { ComponentType } from 'react'
 
 import CopyToHdd from './commands/copy-to-hdd/index.tsx'
 import CutVideo from './commands/cut-video/index.tsx'
 import ToH265 from './commands/to-h265/index.tsx'
 import Menu from './components/Menu.tsx'
+import Message from './components/Message.tsx'
 import StatusBar from './components/StatusBar.tsx'
 import { useDependencies } from './hooks/useDependencies.ts'
 import { useScreenRouter, type Screen } from './hooks/useScreenRouter.ts'
@@ -37,14 +38,12 @@ export default function App({ initialScreen }: Props = {}) {
   const warning =
     missingDeps && missingDeps.length > 0 ? (
       <>
-        <Text bold color="yellow">
-          ⚠️ 缺少依赖:
-        </Text>
+        <Message tone="warning">⚠️ 缺少依赖:</Message>
         {missingDeps.map((tool) => (
-          <Text key={tool.id} color="yellow">
+          <Message key={tool.id} tone="warning">
             {' '}
             - {tool.id} 未安装, 请执行: {tool.installHint}
-          </Text>
+          </Message>
         ))}
       </>
     ) : null

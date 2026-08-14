@@ -83,17 +83,17 @@ video-cli -h           # 查看帮助
 
 ## 脚本
 
-| 命令              | 说明                |
-| ----------------- | ------------------- |
-| `pnpm dev`        | 开发模式运行        |
-| `pnpm build`      | TypeScript 编译     |
+| 命令              | 说明                     |
+| ----------------- | ------------------------ |
+| `pnpm dev`        | 开发模式运行             |
+| `pnpm build`      | TypeScript 编译          |
 | `pnpm bundle`     | 构建并打包为单文件二进制 |
-| `pnpm bundle:sea` | 仅打包(需先 build)  |
-| `pnpm typecheck`  | 类型检查            |
-| `pnpm lint`       | Lint 检查并自动修复 |
-| `pnpm lint:check` | 仅 Lint 检查        |
-| `pnpm fmt`        | 格式化代码          |
-| `pnpm fmt:check`  | 检查代码格式        |
+| `pnpm bundle:sea` | 仅打包(需先 build)       |
+| `pnpm typecheck`  | 类型检查                 |
+| `pnpm lint`       | Lint 检查并自动修复      |
+| `pnpm lint:check` | 仅 Lint 检查             |
+| `pnpm fmt`        | 格式化代码               |
+| `pnpm fmt:check`  | 检查代码格式             |
 
 ## 技术栈
 

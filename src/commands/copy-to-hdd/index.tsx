@@ -1,6 +1,7 @@
 import { Text } from 'ink'
 
 import BackToMenu from '../../components/BackToMenu.tsx'
+import Message from '../../components/Message.tsx'
 import TextInput from '../../components/TextInput.tsx'
 import { useCopyToHdd } from './useCopyToHdd.ts'
 
@@ -88,11 +89,21 @@ export default function CopyToHdd({ onBack }: Props) {
   }
 
   if (step.type === 'done') {
-    return <BackToMenu message={step.message} color="green" onBack={onBack} />
+    return (
+      <>
+        <Message tone="success">{step.message}</Message>
+        <BackToMenu onBack={onBack} />
+      </>
+    )
   }
 
   if (step.type === 'error') {
-    return <BackToMenu message={step.message} color="red" onBack={onBack} />
+    return (
+      <>
+        <Message tone="error">{step.message}</Message>
+        <BackToMenu onBack={onBack} />
+      </>
+    )
   }
 
   return null

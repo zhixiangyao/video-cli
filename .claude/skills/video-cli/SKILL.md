@@ -12,7 +12,7 @@ description: video-cli 项目规范与开发经验. 当任务涉及修改/扩展
 ```
 src/cli.tsx          meow 解析子命令 -> render(<App initialScreen={...}/>, {alternateScreen, concurrent})
 src/app.tsx          顶层: useScreenRouter 路由 + useDependencies 依赖检查 + useWindowSize 撑满终端
-src/components/       通用组件 (Menu / TextInput / BackToMenu)
+src/components/       通用组件 (Menu / TextInput / Message / BackToMenu)
 src/hooks/            通用 hooks (useScreenRouter / useValidatedInput / useYnConfirm / useMp4Files / useDependencies)
 src/commands/<cmd>/   每个命令一个目录: index.tsx (纯渲染) + use<Cmd>.ts (状态机逻辑)
 src/lib/              ffmpeg / disk / files / deps 等与界面无关的逻辑
@@ -40,7 +40,7 @@ src/lib/              ffmpeg / disk / files / deps 等与界面无关的逻辑
 
 - 界面文案为**中文**, 所有标点用**半角** (用户明确要求, 项目最近提交也统一过: `请输入序号: `).
 - 颜色语义: `magenta` 标题, `cyan` 信息/引导, `yellow` 警告, `red` 错误, `green` 成功, `gray` 占位/光标.
-- 流程提示带 emoji (🎵 🔍 ⚠️ 🚀 ℹ️ ❌), 结束页用 `<BackToMenu message=... color=.../>`.
+- 流程提示带 emoji (🎵 🔍 ⚠️ 🚀 ℹ️ ❌), emoji 写进文案字符串; 页面级结果/警告消息用 `<Message tone="error|warning|success">` (统一加粗+语义色), 返回提示用独立的 `<BackToMenu onBack=.../>` (仅 "按 Enter 返回菜单" 输入框).
 - 顶层 Box 统一 `borderStyle="classic"` 经典边框 + `padding={1}`, 尺寸撑满 `columns/rows` (useWindowSize).
 - 文案中英文混排时按现有风格书写, 不加多余空格.
 

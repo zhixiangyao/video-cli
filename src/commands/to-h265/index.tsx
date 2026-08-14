@@ -1,6 +1,7 @@
 import { Newline, Text } from 'ink'
 
 import BackToMenu from '../../components/BackToMenu.tsx'
+import Message from '../../components/Message.tsx'
 import TextInput from '../../components/TextInput.tsx'
 import { useToH265 } from './useToH265.ts'
 
@@ -26,7 +27,12 @@ export default function ToH265({ onBack }: Props) {
 
   if (step.type === 'select-file') {
     if (step.files.length === 0) {
-      return <BackToMenu message="❌ 当前目录没有 .mp4 文件." color="red" onBack={onBack} />
+      return (
+        <>
+          <Message tone="error">❌ 当前目录没有 .mp4 文件.</Message>
+          <BackToMenu onBack={onBack} />
+        </>
+      )
     }
     return (
       <>
@@ -50,7 +56,7 @@ export default function ToH265({ onBack }: Props) {
       <>
         <Text>ℹ️ 当前视频编码: {step.codec}</Text>
         <Text color="yellow">⚠️ 此视频已是 H265/HEVC 编码, 无需转码.</Text>
-        <BackToMenu message="" onBack={onBack} />
+        <BackToMenu onBack={onBack} />
       </>
     )
   }
@@ -91,11 +97,21 @@ export default function ToH265({ onBack }: Props) {
   }
 
   if (step.type === 'done') {
-    return <BackToMenu message={step.message} color="green" onBack={onBack} />
+    return (
+      <>
+        <Message tone="success">{step.message}</Message>
+        <BackToMenu onBack={onBack} />
+      </>
+    )
   }
 
   if (step.type === 'error') {
-    return <BackToMenu message={step.message} color="red" onBack={onBack} />
+    return (
+      <>
+        <Message tone="error">{step.message}</Message>
+        <BackToMenu onBack={onBack} />
+      </>
+    )
   }
 
   return null

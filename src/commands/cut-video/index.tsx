@@ -1,6 +1,7 @@
 import { Newline, Text } from 'ink'
 
 import BackToMenu from '../../components/BackToMenu.tsx'
+import Message from '../../components/Message.tsx'
 import TextInput from '../../components/TextInput.tsx'
 import { useCutVideo } from './useCutVideo.ts'
 
@@ -17,7 +18,12 @@ export default function CutVideo({ onBack }: Props) {
 
   if (step.type === 'select-file') {
     if (step.files.length === 0) {
-      return <BackToMenu message="❌ 当前目录没有 .mp4 文件." color="red" onBack={onBack} />
+      return (
+        <>
+          <Message tone="error">❌ 当前目录没有 .mp4 文件.</Message>
+          <BackToMenu onBack={onBack} />
+        </>
+      )
     }
     return (
       <>
@@ -34,7 +40,7 @@ export default function CutVideo({ onBack }: Props) {
 
   if (step.type === 'input-start-time') {
     if (!step.file) {
-      return <BackToMenu message="" onBack={onBack} />
+      return <BackToMenu onBack={onBack} />
     }
     return (
       <>
@@ -65,11 +71,21 @@ export default function CutVideo({ onBack }: Props) {
   }
 
   if (step.type === 'done') {
-    return <BackToMenu message={step.message} color="green" onBack={onBack} />
+    return (
+      <>
+        <Message tone="success">{step.message}</Message>
+        <BackToMenu onBack={onBack} />
+      </>
+    )
   }
 
   if (step.type === 'error') {
-    return <BackToMenu message={step.message} color="red" onBack={onBack} />
+    return (
+      <>
+        <Message tone="error">{step.message}</Message>
+        <BackToMenu onBack={onBack} />
+      </>
+    )
   }
 
   return null
