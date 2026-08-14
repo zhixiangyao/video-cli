@@ -26,12 +26,14 @@ src/lib/              ffmpeg / disk / files / deps 等与界面无关的逻辑
 ## 核心模式
 
 ### 输入处理 (项目关键模式)
+
 - **TextInput** (`src/components/TextInput.tsx`): 用 `useInput` + `useState` 自研, `submitted` 状态锁住后续输入; `key.return` 提交, `key.backspace || key.delete` 退格, 非 ctrl/meta 字符追加; `isActive: !submitted`. 渲染用 `{value}█` 光标, placeholder 仅空值时显示.
 - **useValidatedInput** (`src/hooks/useValidatedInput.ts`): `reject(msg)` 显示错误并 `inputKey + 1` 重置输入框; `accept()` 清错误并**递增 `key` 强制 TextInput 重新挂载** - 否则 React 复用同位置实例, 新输入框继承 `submitted=true` 和旧值, 导致无法继续输入 (历史上出现过"输入框卡死"bug). **任何"下一步新输入框"都必须带 `key={inputKey}`**.
 - **useYnConfirm** (`src/hooks/useYnConfirm.ts`): 基于 useValidatedInput 的 y/n 校验, 合法则回调 onConfirm/onCancel, 否则 reject 提示.
 - **Menu** (`src/components/Menu.tsx`): 数字选择, `VALID_KEYS` 白名单校验, 非法输入 reject 提示; 菜单退出键 '4' 在 `useScreenRouter` 里 `process.exit(0)`.
 
 ### 全局按键
+
 - `app.tsx` 有全局 `useInput`: 按 `q` 随时退出进程. 测试脚本常依赖此键结束.
 
 ## 界面风格约定

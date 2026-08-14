@@ -5,6 +5,7 @@ import CopyToHdd from './commands/copy-to-hdd/index.tsx'
 import CutVideo from './commands/cut-video/index.tsx'
 import ToH265 from './commands/to-h265/index.tsx'
 import Menu from './components/Menu.tsx'
+import StatusBar from './components/StatusBar.tsx'
 import { useDependencies } from './hooks/useDependencies.ts'
 import { useScreenRouter, type Screen } from './hooks/useScreenRouter.ts'
 
@@ -24,7 +25,7 @@ const screenComponentMap = new Map<CommandScreen, ComponentType<{ onBack: () => 
 export default function App({ initialScreen }: Props = {}) {
   const { screen, handleMenuSelect, goBack } = useScreenRouter(initialScreen)
   const { missingFor } = useDependencies()
-  const { columns, rows } = useWindowSize()
+  const { rows } = useWindowSize()
 
   useInput((input) => {
     if (input === 'q') {
@@ -56,9 +57,13 @@ export default function App({ initialScreen }: Props = {}) {
   }
 
   return (
-    <Box flexDirection="column" alignItems="flex-start" borderStyle="classic" height={rows} width={columns} padding={1}>
-      {warning}
-      {renderScreen()}
+    <Box flexDirection="column" height={rows} width="100%" borderStyle="classic">
+      <Box flexGrow={1} flexDirection="column" alignItems="flex-start" padding={1}>
+        {warning}
+        {renderScreen()}
+      </Box>
+
+      <StatusBar />
     </Box>
   )
 }

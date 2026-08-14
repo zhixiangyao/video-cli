@@ -25,12 +25,16 @@ JSX 需要 Babel 的 `@babel/preset-react`, 或使用 `create-ink-app` 脚手架
 ## 组件
 
 ### `<Text>`
+
 显示并样式化文本. 里面只允许文本节点和嵌套 `<Text>`, 不能放 `<Box>`.
+
 - 样式: `color` (chalk 颜色名/hex/rgb), `backgroundColor`, `dimColor`, `bold`, `italic`, `underline`, `strikethrough`, `inverse`
 - `wrap`: `wrap` (默认) / `hard` / `truncate` / `truncate-start` / `truncate-middle` / `truncate-end`
 
 ### `<Box>`
+
 布局核心 (如浏览器 `display: flex`).
+
 - **尺寸**: `width` `height` (数字或 %), `minWidth` `minHeight` `maxWidth` `maxHeight`, `aspectRatio` (需一个尺寸约束)
 - **Padding**: `paddingTop/Bottom/Left/Right`, `paddingX`, `paddingY`, `padding` (默认 0)
 - **Margin**: `marginTop/Bottom/Left/Right`, `marginX`, `marginY`, `margin` (默认 0)
@@ -42,69 +46,92 @@ JSX 需要 Babel 的 `@babel/preset-react`, 或使用 `create-ink-app` 脚手架
 - **背景**: `backgroundColor` 填满整个 Box 区域并被子 `<Text>` 继承 (除非 Text 自己设了 color); 与边框和 padding 兼容
 
 ### `<Newline>`
+
 添加 `\n` 字符, 必须放在 `<Text>` 内. Prop: `count` (默认 1).
 
 ### `<Spacer>`
+
 沿主轴扩展的弹性空白. 例如在行内把 "Left" 推左, "Right" 推右; 高列中推上推下.
 
 ### `<Static>`
+
 在一切内容之上固定渲染输出 - 用于已完成的任务, 日志, 任何不变更的输出. 只渲染 `items` 中**新增**的项; 对旧项的修改不会重渲染.
+
 - Props: `items` (数组), `style` (容器 `<Box>` 的 props 对象), `children(item, index)` 渲染函数; 根元素必须带 `key`.
 
 ### `<Transform>`
+
 在写屏前转换子 `<Text>` 的输出字符串 (渐变, 链接, 文字效果). 只能作用于 `<Text>` 子元素, 且不得改变输出尺寸. 子元素用了样式 prop 时字符串可能含 ANSI 转义码 - 用 ANSI 感知方法 (`slice-ansi`, `strip-ansi`).
+
 - Prop: `transform(outputLine, index)` - 接收每行输出和从 0 开始的行号.
 
 ## Hooks
 
 ### `useInput(inputHandler, options?)`
+
 处理用户输入; 逐字符调用, 粘贴时一次收到完整字符串. Handler 收 `(input, key)`:
+
 - `key` 标志: `leftArrow` `rightArrow` `upArrow` `downArrow` `return` `escape` `ctrl` `shift` `tab` `backspace` `delete` `pageDown` `pageUp` `home` `end` `meta` `super` `hyper` `capsLock` `numLock` `eventType` (`'press'`/`'repeat'`/`'release'` - 后三者需要 kitty keyboard 协议)
 - Options: `isActive` (默认 true)
 
 ### `usePaste(handler, options?)`
+
 激活时自动启用 bracketed paste 模式, handler 收到完整粘贴字符串原样 (保留换行和转义). 粘贴内容不会到达 `useInput` handlers. Options: `isActive`.
 
 ### `useApp()`
+
 返回:
+
 - `exit(errorOrResult?)` - undefined 时 resolve; Error 时 reject; 其他值 resolve 该值
 - `waitUntilRenderFlush()` - 输出 flush 后 settle
 - `suspendTerminal(callback?)` - 把终端交给子进程 (如 `$EDITOR`/`fzf`), 恢复后重绘 Ink 状态; 支持回调形式或手动 `suspension.resume()`; 也可作为 `await using` 的 disposable; 已挂起时调用会 throw; 非交互模式下 no-op
 
 ### `useStdin()`
+
 返回 `stdin` 流, `isRawModeSupported`, `setRawMode(isRawModeEnabled)` (除非支持否则 throw; 必须用 Ink 的版本, 这样 Ctrl+C 才仍然有效).
 
 ### `useStdout()`
+
 返回 `stdout` 流和 `write(data)` - 在 Ink 输出之外打印, 无冲突 (字符串, 类似 `<Static>` 但任意字符串).
 
 ### `useBoxMetrics(ref)`
+
 跟踪 `<Box>` ref, 返回 `width` `height` `left` `top` `hasMeasured` (首次布局前或脱离时全为 0).
 
 ### `useStderr()`
+
 同 `useStdout` 语义, 面向 stderr.
 
 ### `useWindowSize()`
+
 返回 `columns` `rows`; 终端 resize 时重渲染.
 
 ### `useFocus(options?)`
+
 让组件可聚焦; Tab 按渲染顺序循环切换可聚焦组件. Options: `autoFocus`, `isActive`, `id` (程序化聚焦). 返回 `isFocused`.
 
 ### `useFocusManager()`
+
 返回 `enableFocus()`, `disableFocus()`, `focusNext()`, `focusPrevious()`, `focus(id)`, `activeId` (string | undefined). 焦点管理默认开启; Ink 在 Tab / Shift+Tab 时自动调 `focusNext`/`focusPrevious`.
 
 ### `useCursor()`
+
 返回 `setCursorPosition(position)`, `position = {x, y}` (0 起始, 相对 Ink 输出) 或 `undefined` 隐藏光标; IME 支持必需; 宽字符 (CJK, emoji) 用 `string-width` 计算.
 
 ### `useIsScreenReaderEnabled()`
+
 返回布尔; 为屏幕阅读器渲染不同输出.
 
 ### `useAnimation(options?)`
+
 返回 `frame` (离散计数器), `time` (已过毫秒), `delta` (距上次 tick 毫秒), `reset()`. Options: `interval` (默认 100), `isActive` (切换会重置所有值为 0). 所有动画共享单个内部定时器.
 
 ## render API
 
 ### `render(tree, options?)` -> Instance
+
 Options:
+
 - `stdout` `stdin` `stderr` (流, 默认 `process.*`)
 - `exitOnCtrlC` (默认 true)
 - `patchConsole` (默认 true; console 输出与 Ink 输出交错, unmount 时恢复原生 console)
@@ -119,9 +146,11 @@ Options:
 - `kittyKeyboard` - `{mode: 'auto'|'enabled'|'disabled', flags: [...]}`; flags: `disambiguateEscapeCodes`, `reportEventTypes`, `reportAlternateKeys`, `reportAllKeysAsEscapeCodes`, `reportAssociatedText`; 改变输入行为 (非打印键产生空 `input`, Ctrl+字母映射为 `key.ctrl` + 字母名, 区分 Ctrl+I 与 Tab, Shift+Enter, Escape 与 Ctrl+[)
 
 ### `renderToString(tree, options?)` -> string
+
 同步, 不写 stdout, 不监听终端. 终端 hooks 返回 no-op (不 throw). `useEffect` 会运行但它的状态更新不影响返回输出; `useLayoutEffect` 的更新会. `<Static>` 输出前置. 错误在 cleanup 后传播. Option: `columns` (默认 80).
 
 ### Instance (render 的返回值)
+
 - `rerender(tree)` - 替换根组件或更新其 props
 - `unmount()` - 手动卸载
 - `waitUntilExit()` - unmount 时 settle; 用 `exit(value)` resolve, 用 `exit(error)` reject
@@ -130,6 +159,7 @@ Options:
 - `clear()` - 清空输出
 
 ### `measureElement(ref)`
+
 返回 `{x, y, width, height}` 给一个 `<Box>` ref. 是布局树坐标, 不是终端视口坐标 (鼠标事件比较时需要换算). 渲染期间调用返回 0 - 从 `useEffect`, `useLayoutEffect`, 输入处理器或定时器里调用, 内容变化时重新测量.
 
 ## 测试
