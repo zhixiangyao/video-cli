@@ -1,4 +1,4 @@
-import { Text, useInput } from 'ink'
+import { Box, Text, useInput, useWindowSize } from 'ink'
 import type { ComponentType } from 'react'
 
 import CopyToHdd from './commands/copy-to-hdd/index.tsx'
@@ -24,6 +24,7 @@ const screenComponentMap = new Map<CommandScreen, ComponentType<{ onBack: () => 
 export default function App({ initialScreen }: Props = {}) {
   const { screen, handleMenuSelect, goBack } = useScreenRouter(initialScreen)
   const { missingFor } = useDependencies()
+  const { columns, rows } = useWindowSize()
 
   useInput((input) => {
     if (input === 'q') {
@@ -44,7 +45,6 @@ export default function App({ initialScreen }: Props = {}) {
             - {tool.id} 未安装, 请执行: {tool.installHint}
           </Text>
         ))}
-        <Text color="yellow">---------------------------------</Text>
       </>
     ) : null
 
@@ -56,9 +56,9 @@ export default function App({ initialScreen }: Props = {}) {
   }
 
   return (
-    <>
+    <Box flexDirection="column" alignItems="flex-start" borderStyle="classic" height={rows} width={columns} padding={1}>
       {warning}
       {renderScreen()}
-    </>
+    </Box>
   )
 }

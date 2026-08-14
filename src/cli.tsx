@@ -32,4 +32,4 @@ const cli = meow(helpMessage, {
 const screenFromCommand = (command: string | undefined): Screen =>
   command && COMMANDS.includes(command as (typeof COMMANDS)[number]) ? (command as (typeof COMMANDS)[number]) : 'menu'
 
-render(<App initialScreen={screenFromCommand(cli.command)} />)
+render(<App initialScreen={screenFromCommand(cli.command)} />, { alternateScreen: true, concurrent: true })

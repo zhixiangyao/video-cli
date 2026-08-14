@@ -1,5 +1,5 @@
-import { builtinModules } from 'node:module'
 import { chmodSync } from 'node:fs'
+import { builtinModules } from 'node:module'
 import { resolve } from 'node:path'
 
 import { defineConfig } from 'vite'
@@ -8,13 +8,11 @@ const outDir = 'dist'
 const outFileName = 'cli.mjs'
 
 export default defineConfig({
+  input: resolve(import.meta.dirname, 'src/cli.tsx'),
   build: {
     outDir,
     reportCompressedSize: false,
-    lib: {
-      entry: resolve(import.meta.dirname, 'src/cli.tsx'),
-      formats: ['es'],
-    },
+    chunkSizeWarningLimit: 1000,
     rolldownOptions: {
       platform: 'node',
       output: {

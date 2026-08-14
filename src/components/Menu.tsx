@@ -1,4 +1,4 @@
-import { Text } from 'ink'
+import { Box, Text } from 'ink'
 
 import { useValidatedInput } from '../hooks/useValidatedInput.ts'
 import TextInput from './TextInput.tsx'
@@ -34,15 +34,17 @@ export default function Menu({ onSelect }: Props) {
       <Text bold color="magenta">
         欢迎使用视频工具箱
       </Text>
-      <Text>--------------------------------------------------------------</Text>
-      {MENU_ITEMS.map((item) => (
-        <Text key={item.key}>
-          {item.key}) {item.label}
-        </Text>
-      ))}
+
+      <Box flexDirection="column" paddingY={1}>
+        {MENU_ITEMS.map((item) => (
+          <Text key={item.key}>
+            {item.key}) {item.label}
+          </Text>
+        ))}
+      </Box>
+
       {inputError && <Text color="red">{inputError}</Text>}
       <TextInput key={inputKey} prompt="请选择功能 (1-4): " onSubmit={handleSelect} />
-      <Text>--------------------------------------------------------------</Text>
     </>
   )
 }
